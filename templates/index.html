@@ -20,16 +20,13 @@
             --orange: #f97316;
             --red: #ef4444;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'DM Sans', sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
         }
-
         body::before {
             content: '';
             position: fixed;
@@ -41,7 +38,6 @@
             pointer-events: none;
             z-index: 0;
         }
-
         .container {
             max-width: 1100px;
             margin: 0 auto;
@@ -49,389 +45,150 @@
             position: relative;
             z-index: 1;
         }
-
-        /* Header */
-        .header {
-            text-align: center;
-            margin-bottom: 36px;
-        }
-
+        .header { text-align: center; margin-bottom: 36px; }
         .header-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            display: inline-flex; align-items: center; gap: 8px;
             background: var(--accent-glow);
             border: 1px solid rgba(59, 130, 246, 0.2);
-            padding: 6px 16px;
-            border-radius: 100px;
+            padding: 6px 16px; border-radius: 100px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: var(--accent);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
+            font-size: 11px; color: var(--accent);
+            letter-spacing: 1.5px; text-transform: uppercase;
             margin-bottom: 16px;
         }
-
         .header-badge .pulse {
             width: 8px; height: 8px;
-            background: var(--green);
-            border-radius: 50%;
+            background: var(--green); border-radius: 50%;
             animation: pulse 2s infinite;
         }
-
         @keyframes pulse {
             0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
             50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
         }
-
         h1 {
-            font-size: 38px;
-            font-weight: 700;
-            letter-spacing: -1px;
+            font-size: 38px; font-weight: 700; letter-spacing: -1px;
             background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             margin-bottom: 6px;
         }
-
         .subtitle { color: var(--text-dim); font-size: 15px; }
-
-        /* Tab navigation */
         .tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 28px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 4px;
+            display: flex; gap: 4px; margin-bottom: 28px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 4px;
         }
-
         .tab {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: var(--text-dim);
+            flex: 1; padding: 12px; text-align: center; border-radius: 8px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; color: var(--text-dim);
         }
-
-        .tab.active {
-            background: var(--accent);
-            color: white;
-        }
-
-        .tab:hover:not(.active) {
-            background: var(--surface-2);
-            color: var(--text);
-        }
-
+        .tab.active { background: var(--accent); color: white; }
+        .tab:hover:not(.active) { background: var(--surface-2); color: var(--text); }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeUp 0.4s ease; }
-
-        /* Cards */
         .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 28px;
-            margin-bottom: 24px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 28px; margin-bottom: 24px;
         }
-
-        .card h2 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .card .desc {
-            color: var(--text-dim);
-            font-size: 13px;
-            margin-bottom: 20px;
-        }
-
-        /* ===== TAB 1: DEPARTURE BOARD ===== */
-        .board-controls {
-            display: flex;
-            gap: 12px;
-            align-items: end;
-            margin-bottom: 20px;
-        }
-
+        .card h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .card .desc { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; }
+        .board-controls { display: flex; gap: 12px; align-items: end; margin-bottom: 20px; }
         .board-controls label {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-dim);
-            display: block;
-            margin-bottom: 6px;
+            font-size: 12px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-dim); display: block; margin-bottom: 6px;
         }
-
         .board-controls input {
-            padding: 10px 14px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 16px;
-            text-transform: uppercase;
-            width: 100px;
-            outline: none;
+            padding: 10px 14px; background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text); font-family: 'JetBrains Mono', monospace;
+            font-size: 16px; text-transform: uppercase; width: 100px; outline: none;
         }
-
         .board-controls input:focus { border-color: var(--accent); }
-
         .btn {
-            padding: 10px 24px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            padding: 10px 24px; background: var(--accent); color: white; border: none;
+            border-radius: 8px; font-family: 'DM Sans', sans-serif;
+            font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s;
         }
-
-        .btn:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-        }
-
-        /* Table */
+        .btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3); }
         table { width: 100%; border-collapse: collapse; }
-
         th {
-            padding: 10px 14px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-dim);
+            padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim);
             border-bottom: 1px solid var(--border);
         }
-
-        td {
-            padding: 12px 14px;
-            font-size: 14px;
-            border-bottom: 1px solid rgba(30, 41, 59, 0.5);
-        }
-
+        td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid rgba(30, 41, 59, 0.5); }
         tr:hover td { background: rgba(59, 130, 246, 0.03); }
-
         .late { color: var(--red); font-weight: 600; }
         .ontime { color: var(--green); font-weight: 600; }
         .cancelled { color: var(--red); font-weight: 700; text-transform: uppercase; }
-
-        /* Kafka stream */
-        #stream-log {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--green);
-            font-family: 'JetBrains Mono', monospace;
-            padding: 16px;
-            height: 180px;
-            overflow-y: scroll;
-            border-radius: 10px;
-            font-size: 11px;
-            line-height: 1.6;
-        }
-
-        /* ===== TAB 2: JOURNEY PLANNER ===== */
-        .planner-row {
-            display: flex;
-            gap: 14px;
-            align-items: end;
-            margin-bottom: 20px;
-        }
-
+        .planner-row { display: flex; gap: 14px; align-items: end; margin-bottom: 20px; }
         .input-group { flex: 1; }
-
         .input-group label {
-            display: block;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-dim);
-            margin-bottom: 6px;
+            display: block; font-size: 11px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-dim); margin-bottom: 6px;
         }
-
         .route-display {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px 14px;
-            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace; font-size: 13px;
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px 14px; color: var(--accent);
         }
-
         input[type="date"] {
-            width: 100%;
-            padding: 10px 14px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            outline: none;
+            width: 100%; padding: 10px 14px; background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
         }
-
         input[type="date"]:focus { border-color: var(--accent); }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
-
-        /* Result */
         .result { display: none; border-top: 1px solid var(--border); padding-top: 20px; }
         .result.visible { display: block; animation: fadeUp 0.4s ease; }
-
         .confidence-banner {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 18px;
+            padding: 20px; border-radius: 12px; margin-bottom: 16px;
         }
-
         .confidence-score {
-            width: 72px; height: 72px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            font-weight: 700;
-            color: white;
-            flex-shrink: 0;
+            width: 72px; height: 72px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace; font-size: 13px;
+            font-weight: 700; color: white; flex-shrink: 0;
         }
-
         .confidence-details h3 { font-size: 17px; margin-bottom: 4px; }
         .confidence-details p { font-size: 13px; opacity: 0.85; line-height: 1.5; }
-
-        .result-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
+        .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .stat-card {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 14px;
-            text-align: center;
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 14px; text-align: center;
         }
-
         .stat-value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 26px;
-            font-weight: 700;
-            margin-bottom: 4px;
+            font-family: 'JetBrains Mono', monospace; font-size: 26px;
+            font-weight: 700; margin-bottom: 4px;
         }
-
-        .stat-label {
-            font-size: 10px;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* ===== TAB 3: FORECAST ===== */
-        .jax-status {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
+        .stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+        .jax-status { display: flex; gap: 16px; margin-bottom: 20px; }
         .jax-status .stat-card { flex: 1; }
-
         .forecast-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 8px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;
         }
-
         .forecast-day {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px;
-            text-align: center;
-            transition: all 0.3s;
-            cursor: pointer;
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px; text-align: center;
+            transition: all 0.3s; cursor: pointer;
         }
-
-        .forecast-day:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        .forecast-date {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: var(--text-dim);
-            margin-bottom: 4px;
-        }
-
+        .forecast-day:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .forecast-date { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
         .forecast-mins { font-size: 20px; font-weight: 700; margin-bottom: 2px; }
-
-        .forecast-stress {
-            font-size: 10px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .stress-bar {
-            height: 3px;
-            border-radius: 2px;
-            margin-top: 6px;
-            background: var(--border);
-            overflow: hidden;
-        }
-
-        .stress-bar-fill {
-            height: 100%;
-            border-radius: 2px;
-            transition: width 0.6s ease;
-        }
-
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 32px 0 16px;
-            color: var(--text-dim);
-            font-size: 11px;
-        }
-
+        .forecast-stress { font-size: 10px; font-family: 'JetBrains Mono', monospace; }
+        .stress-bar { height: 3px; border-radius: 2px; margin-top: 6px; background: var(--border); overflow: hidden; }
+        .stress-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+        .footer { text-align: center; padding: 32px 0 16px; color: var(--text-dim); font-size: 11px; }
         .footer a { color: var(--accent); text-decoration: none; }
-
         .loading-spinner {
-            display: inline-block;
-            width: 14px; height: 14px;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 6px;
-            vertical-align: middle;
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid var(--border); border-top-color: var(--accent);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-right: 6px; vertical-align: middle;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 768px) {
             .planner-row, .board-controls { flex-direction: column; }
             .result-stats, .jax-status { grid-template-columns: 1fr; }
@@ -442,24 +199,17 @@
     </style>
 </head>
 <body>
-
 <div class="container">
-    <!-- Header -->
     <div class="header">
-        <div class="header-badge">
-            <span class="pulse"></span>
-            JAX Neural Network · Live
-        </div>
+        <div class="header-badge"><span class="pulse"></span> JAX Neural Network · Live</div>
         <h1>Manchester → Euston</h1>
-        <p class="subtitle">AI-powered delay prediction · Live departures · Kafka stream</p>
+        <p class="subtitle">AI-powered delay prediction · Live departures · Journey planner</p>
     </div>
 
-    <!-- Tabs -->
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('board')">🚆 Departure Board</div>
-        <div class="tab" onclick="switchTab('planner')">🗓 Journey Planner</div>
-        <div class="tab" onclick="switchTab('forecast')">📈 30-Day Forecast</div>
-        <div class="tab" onclick="switchTab('stream')">⚡ Live Stream</div>
+        <div class="tab active" onclick="switchTab(this, 'board')">🚆 Departure Board</div>
+        <div class="tab" onclick="switchTab(this, 'planner')">🗓 Journey Planner</div>
+        <div class="tab" onclick="switchTab(this, 'forecast')">📈 30-Day Forecast</div>
     </div>
 
     <!-- TAB 1: Departure Board -->
@@ -467,7 +217,6 @@
         <div class="card">
             <h2>🚆 Live Departure Board</h2>
             <p class="desc">Enter any UK station CRS code to view live departures.</p>
-            
             <div class="board-controls">
                 <div>
                     <label>Station CRS</label>
@@ -475,20 +224,9 @@
                 </div>
                 <button class="btn" onclick="getBoard()">Load Board</button>
             </div>
-
             <table id="boardTable">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Destination</th>
-                        <th>Platform</th>
-                        <th>Status</th>
-                        <th>Operator</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="5" style="color:var(--text-dim)">Enter a station code and click Load Board...</td></tr>
-                </tbody>
+                <thead><tr><th>Time</th><th>Destination</th><th>Platform</th><th>Status</th><th>Operator</th></tr></thead>
+                <tbody><tr><td colspan="5" style="color:var(--text-dim)">Enter a station code and click Load Board...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -498,7 +236,6 @@
         <div class="card">
             <h2>🗓 Journey Planner</h2>
             <p class="desc">Select a travel date to see the JAX model's delay prediction and confidence score.</p>
-            
             <div class="planner-row">
                 <div class="input-group">
                     <label>Route</label>
@@ -510,7 +247,6 @@
                 </div>
                 <button class="btn" onclick="planJourney()">Check Forecast</button>
             </div>
-
             <div class="result" id="result">
                 <div class="confidence-banner" id="confidenceBanner">
                     <div class="confidence-score" id="confidenceScore">--</div>
@@ -520,18 +256,9 @@
                     </div>
                 </div>
                 <div class="result-stats">
-                    <div class="stat-card">
-                        <div class="stat-value" id="statMins">--</div>
-                        <div class="stat-label">Predicted Delay (mins)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="statStress">--</div>
-                        <div class="stat-label">Stress Coefficient</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="statRmse">--</div>
-                        <div class="stat-label">Model RMSE (±mins)</div>
-                    </div>
+                    <div class="stat-card"><div class="stat-value" id="statMins">--</div><div class="stat-label">Predicted Delay (mins)</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statStress">--</div><div class="stat-label">Stress Coefficient</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statRmse">--</div><div class="stat-label">Model RMSE (±mins)</div></div>
                 </div>
             </div>
         </div>
@@ -542,22 +269,11 @@
         <div class="card">
             <h2>📈 30-Day JAX Forecast</h2>
             <p class="desc">Predicted daily delay minutes and route stress for the next 30 days. Click any day to plan.</p>
-            
             <div class="jax-status" id="jaxStatus">
-                <div class="stat-card">
-                    <div class="stat-value" id="jaxRmse">--</div>
-                    <div class="stat-label">Model RMSE</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="jaxDays">--</div>
-                    <div class="stat-label">Training Days</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="jaxUpdated">--</div>
-                    <div class="stat-label">Last Updated</div>
-                </div>
+                <div class="stat-card"><div class="stat-value" id="jaxRmse">--</div><div class="stat-label">Model RMSE</div></div>
+                <div class="stat-card"><div class="stat-value" id="jaxDays">--</div><div class="stat-label">Training Days</div></div>
+                <div class="stat-card"><div class="stat-value" id="jaxUpdated">--</div><div class="stat-label">Last Updated</div></div>
             </div>
-
             <div class="forecast-grid" id="forecastGrid">
                 <div style="grid-column: 1/-1; text-align: center; padding: 32px; color: var(--text-dim);">
                     <span class="loading-spinner"></span> Loading forecast data...
@@ -566,94 +282,61 @@
         </div>
     </div>
 
-    <!-- TAB 4: Kafka Stream -->
-    <div class="tab-content" id="tab-stream">
-        <div class="card">
-            <h2>⚡ Live Darwin Push Port Stream</h2>
-            <p class="desc">Real-time raw JSON updates from the National Rail Kafka feed.</p>
-            <div id="stream-log"></div>
-        </div>
-    </div>
-
-    <!-- Footer -->
     <div class="footer">
         TrainJAX · Powered by <a href="#">JAX/Flax Neural Network</a> · Manchester to Euston Route
-        <br>Predictions from Digital Ocean PostgreSQL · Live data from Network Rail
+        <br>Predictions from Digital Ocean PostgreSQL · Live data from Network Rail · Scraper runs every 60s
     </div>
 </div>
 
-<script src="/socket.io/socket.io.js"></script>
 <script>
-    // --- TAB SWITCHING ---
-    function switchTab(name) {
+    function switchTab(el, name) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(`tab-${name}`).classList.add('active');
-        event.target.classList.add('active');
+        document.getElementById('tab-' + name).classList.add('active');
+        el.classList.add('active');
     }
 
-    // Set default date
     document.getElementById('travelDate').valueAsDate = new Date();
 
-    // --- DEPARTURE BOARD ---
     async function getBoard() {
         const crs = document.getElementById('crsInput').value.toUpperCase();
         const tbody = document.querySelector('#boardTable tbody');
         tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim)"><span class="loading-spinner"></span> Loading...</td></tr>';
-
         try {
-            const response = await fetch(`/api/departures/${crs}`);
+            const response = await fetch('/api/departures/' + crs);
             if (!response.ok) throw new Error('Network error');
             const data = await response.json();
             tbody.innerHTML = '';
-
             const services = data.trainServices || [];
             if (services.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim)">No departures found.</td></tr>';
                 return;
             }
-
-            services.forEach(train => {
-                const row = document.createElement('tr');
-                const std = train.std || 'N/A';
-                
-                let destName = 'Unknown';
+            services.forEach(function(train) {
+                var row = document.createElement('tr');
+                var std = train.std || 'N/A';
+                var destName = 'Unknown';
                 if (train.destination) {
                     if (Array.isArray(train.destination)) {
-                        destName = train.destination[0]?.locationName || 'Unknown';
+                        destName = (train.destination[0] && train.destination[0].locationName) || 'Unknown';
                     } else if (train.destination.location) {
-                        const loc = Array.isArray(train.destination.location) ? train.destination.location[0] : train.destination.location;
+                        var loc = Array.isArray(train.destination.location) ? train.destination.location[0] : train.destination.location;
                         destName = loc.locationName || 'Unknown';
                     } else if (train.destination.locationName) {
                         destName = train.destination.locationName;
                     }
                 }
-
-                const plat = train.platform || '-';
-                const etd = train.etd || 'N/A';
-                const operator = train.operator || train.operatorCode || '';
-                const isCancelled = train.isCancelled || false;
-
-                let statusClass = 'ontime';
-                let statusText = etd;
-                if (isCancelled || etd.toLowerCase() === 'cancelled') {
-                    statusClass = 'cancelled';
-                    statusText = 'CANCELLED';
-                } else if (etd !== 'On time' && etd !== 'N/A') {
-                    statusClass = 'late';
-                }
-
-                let displayTime = std;
-                try { displayTime = new Date(std).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
-                catch { displayTime = String(std).substring(0, 5); }
-
-                row.innerHTML = `
-                    <td style="font-family:'JetBrains Mono',monospace;font-weight:600">${displayTime}</td>
-                    <td>${destName}</td>
-                    <td style="text-align:center">${plat}</td>
-                    <td class="${statusClass}">${statusText}</td>
-                    <td style="color:var(--text-dim)">${operator}</td>
-                `;
+                var plat = train.platform || '-';
+                var etd = train.etd || 'N/A';
+                var operator = train.operator || train.operatorCode || '';
+                var isCancelled = train.isCancelled || false;
+                var statusClass = 'ontime';
+                var statusText = etd;
+                if (isCancelled || etd.toLowerCase() === 'cancelled') { statusClass = 'cancelled'; statusText = 'CANCELLED'; }
+                else if (etd !== 'On time' && etd !== 'N/A') { statusClass = 'late'; }
+                var displayTime = String(std).substring(0, 5);
+                try { displayTime = new Date(std).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); } catch(e) {}
+                row.innerHTML = '<td style="font-family:JetBrains Mono,monospace;font-weight:600">' + displayTime + '</td><td>' + destName + '</td><td style="text-align:center">' + plat + '</td><td class="' + statusClass + '">' + statusText + '</td><td style="color:var(--text-dim)">' + operator + '</td>';
                 tbody.appendChild(row);
             });
         } catch (error) {
@@ -661,38 +344,32 @@
         }
     }
 
-    // --- JOURNEY PLANNER ---
     async function planJourney() {
-        const date = document.getElementById('travelDate').value;
+        var date = document.getElementById('travelDate').value;
         if (!date) return;
-
-        const result = document.getElementById('result');
+        var result = document.getElementById('result');
         result.classList.add('visible');
-
         try {
-            const res = await fetch(`/api/plan/${date}`);
-            const data = await res.json();
-
+            var res = await fetch('/api/plan/' + date);
+            var data = await res.json();
             if (data.status === 'ok') {
-                const banner = document.getElementById('confidenceBanner');
-                banner.style.background = `${data.color}15`;
-                banner.style.border = `1px solid ${data.color}30`;
-
+                document.getElementById('confidenceBanner').style.background = data.color + '15';
+                document.getElementById('confidenceBanner').style.border = '1px solid ' + data.color + '30';
                 document.getElementById('confidenceScore').style.background = data.color;
                 document.getElementById('confidenceScore').textContent = data.confidence;
-                document.getElementById('confidenceTitle').textContent = `${data.confidence} Confidence`;
+                document.getElementById('confidenceTitle').textContent = data.confidence + ' Confidence';
                 document.getElementById('confidenceTitle').style.color = data.color;
                 document.getElementById('confidenceText').textContent = data.recommendation;
-
                 document.getElementById('statMins').textContent = Math.round(data.predicted_minutes);
                 document.getElementById('statMins').style.color = data.color;
                 document.getElementById('statStress').textContent = (data.stress_coefficient * 100).toFixed(1) + '%';
                 document.getElementById('statRmse').textContent = '±' + data.rmse;
             } else {
-                document.getElementById('confidenceTitle').textContent = 'No Data';
-                document.getElementById('confidenceText').textContent = data.message || 'No prediction for this date.';
                 document.getElementById('confidenceScore').style.background = 'var(--text-dim)';
                 document.getElementById('confidenceScore').textContent = '—';
+                document.getElementById('confidenceTitle').textContent = 'No Data';
+                document.getElementById('confidenceTitle').style.color = 'var(--text-dim)';
+                document.getElementById('confidenceText').textContent = data.message || 'No prediction for this date.';
             }
         } catch (e) {
             document.getElementById('confidenceTitle').textContent = 'Error';
@@ -700,55 +377,72 @@
         }
     }
 
-    // --- 30-DAY FORECAST ---
     async function loadForecast() {
         try {
-            const res = await fetch('/api/predictions');
-            const data = await res.json();
+            var res = await fetch('/api/predictions');
+            var data = await res.json();
+            console.log('Predictions response:', data);
 
-            if (data.status === 'ok' && data.predictions.length > 0) {
-                const all = data.predictions;
-                const forecasts = all.filter(p => p.data_type === 'Forecast');
-                const actuals = all.filter(p => p.data_type === 'Actual');
-                
-                // Stats
+            if (data.status === 'ok' && data.predictions && data.predictions.length > 0) {
+                var all = data.predictions;
+                var forecasts = [];
+                var actuals = [];
+
+                for (var i = 0; i < all.length; i++) {
+                    if (all[i].data_type === 'Forecast') forecasts.push(all[i]);
+                    else actuals.push(all[i]);
+                }
+
+                console.log('Forecasts found:', forecasts.length, 'Actuals:', actuals.length);
+
                 if (all.length > 0) {
                     document.getElementById('jaxRmse').textContent = '±' + all[0].rmse;
                     document.getElementById('jaxDays').textContent = actuals.length;
-                    const updated = all[0].updated_at ? new Date(all[0].updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '—';
-                    document.getElementById('jaxUpdated').textContent = updated;
+                    var updated = all[0].updated_at;
+                    if (updated) {
+                        var d = new Date(updated);
+                        document.getElementById('jaxUpdated').textContent = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                    }
                 }
 
-                const grid = document.getElementById('forecastGrid');
-                grid.innerHTML = forecasts.map(f => {
-                    const date = new Date(f.forecast_date);
-                    const dateStr = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-                    const stress = parseFloat(f.stress_coefficient);
-                    const color = stressColor(stress);
-                    return `
-                        <div class="forecast-day" onclick="selectDate('${f.forecast_date}')">
-                            <div class="forecast-date">${dateStr}</div>
-                            <div class="forecast-mins" style="color:${color}">${Math.round(f.predicted_minutes)}</div>
-                            <div class="forecast-stress" style="color:${color}">${(stress * 100).toFixed(0)}% stress</div>
-                            <div class="stress-bar">
-                                <div class="stress-bar-fill" style="width:${Math.min(stress * 100, 100)}%;background:${color}"></div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                var grid = document.getElementById('forecastGrid');
+                if (forecasts.length === 0) {
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:32px;">No forecast data yet. Model is still training.</div>';
+                    return;
+                }
+
+                var html = '';
+                for (var j = 0; j < forecasts.length; j++) {
+                    var f = forecasts[j];
+                    var dateStr = f.forecast_date;
+                    var parts = dateStr.split('-');
+                    var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                    var label = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                    var stress = parseFloat(f.stress_coefficient);
+                    var color = stressColor(stress);
+                    var mins = Math.round(f.predicted_minutes);
+                    var pct = Math.min(stress * 100, 100).toFixed(0);
+
+                    html += '<div class="forecast-day" onclick="selectDate(\'' + dateStr + '\')">';
+                    html += '<div class="forecast-date">' + label + '</div>';
+                    html += '<div class="forecast-mins" style="color:' + color + '">' + mins + '</div>';
+                    html += '<div class="forecast-stress" style="color:' + color + '">' + pct + '% stress</div>';
+                    html += '<div class="stress-bar"><div class="stress-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>';
+                    html += '</div>';
+                }
+                grid.innerHTML = html;
+            } else {
+                document.getElementById('forecastGrid').innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:32px;">No forecast data available yet.</div>';
             }
         } catch (e) {
-            document.getElementById('forecastGrid').innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:32px;">Forecast data not yet available. The JAX model may still be training.</div>';
+            console.error('Forecast load error:', e);
+            document.getElementById('forecastGrid').innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:32px;">Could not load forecast. The model may still be training.</div>';
         }
     }
 
     function selectDate(dateStr) {
         document.getElementById('travelDate').value = dateStr;
-        switchTab('planner');
-        document.querySelector('.tab:nth-child(2)').classList.add('active');
-        document.querySelector('.tab:nth-child(1)').classList.remove('active');
-        document.querySelector('.tab:nth-child(3)').classList.remove('active');
-        document.querySelector('.tab:nth-child(4)').classList.remove('active');
+        switchTab(document.querySelectorAll('.tab')[1], 'planner');
         planJourney();
     }
 
@@ -760,21 +454,7 @@
         return '#ef4444';
     }
 
-    // --- KAFKA STREAM ---
-    const socket = io();
-    const logDiv = document.getElementById('stream-log');
-
-    socket.on('kafka-message', (msg) => {
-        const p = document.createElement('div');
-        const time = new Date().toLocaleTimeString('en-GB');
-        p.innerText = `[${time}] ${msg.substring(0, 150)}...`;
-        logDiv.prepend(p);
-        if (logDiv.children.length > 50) logDiv.removeChild(logDiv.lastChild);
-    });
-
-    // --- INIT ---
     loadForecast();
 </script>
-
 </body>
 </html>
