@@ -6,196 +6,99 @@
     <title>TrainJAX — Manchester to Euston</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #0a0e17;
-            --surface: #111827;
-            --surface-2: #1a2236;
-            --border: #1e293b;
-            --text: #e2e8f0;
-            --text-dim: #64748b;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.15);
-            --green: #22c55e;
-            --yellow: #eab308;
-            --orange: #f97316;
-            --red: #ef4444;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: 
-                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 32px 24px;
-            position: relative;
-            z-index: 1;
-        }
-        .header { text-align: center; margin-bottom: 36px; }
-        .header-badge {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: var(--accent-glow);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            padding: 6px 16px; border-radius: 100px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px; color: var(--accent);
-            letter-spacing: 1.5px; text-transform: uppercase;
-            margin-bottom: 16px;
-        }
-        .header-badge .pulse {
-            width: 8px; height: 8px;
-            background: var(--green); border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-            50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-        }
-        h1 {
-            font-size: 38px; font-weight: 700; letter-spacing: -1px;
-            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            margin-bottom: 6px;
-        }
-        .subtitle { color: var(--text-dim); font-size: 15px; }
-        .tabs {
-            display: flex; gap: 4px; margin-bottom: 28px;
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px; padding: 4px;
-        }
-        .tab {
-            flex: 1; padding: 12px; text-align: center; border-radius: 8px;
-            font-size: 14px; font-weight: 600; cursor: pointer;
-            transition: all 0.3s; color: var(--text-dim);
-        }
-        .tab.active { background: var(--accent); color: white; }
-        .tab:hover:not(.active) { background: var(--surface-2); color: var(--text); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeUp 0.4s ease; }
-        .card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 14px; padding: 28px; margin-bottom: 24px;
-        }
-        .card h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-        .card .desc { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; }
-        .board-controls { display: flex; gap: 12px; align-items: end; margin-bottom: 20px; }
-        .board-controls label {
-            font-size: 12px; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 1px; color: var(--text-dim); display: block; margin-bottom: 6px;
-        }
-        .board-controls input {
-            padding: 10px 14px; background: var(--surface-2);
-            border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text); font-family: 'JetBrains Mono', monospace;
-            font-size: 16px; text-transform: uppercase; width: 100px; outline: none;
-        }
-        .board-controls input:focus { border-color: var(--accent); }
-        .btn {
-            padding: 10px 24px; background: var(--accent); color: white; border: none;
-            border-radius: 8px; font-family: 'DM Sans', sans-serif;
-            font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s;
-        }
-        .btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3); }
-        table { width: 100%; border-collapse: collapse; }
-        th {
-            padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600;
-            text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim);
-            border-bottom: 1px solid var(--border);
-        }
-        td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid rgba(30, 41, 59, 0.5); }
-        tr:hover td { background: rgba(59, 130, 246, 0.03); }
-        .late { color: var(--red); font-weight: 600; }
-        .ontime { color: var(--green); font-weight: 600; }
-        .cancelled { color: var(--red); font-weight: 700; text-transform: uppercase; }
-        .planner-row { display: flex; gap: 14px; align-items: end; margin-bottom: 20px; }
-        .input-group { flex: 1; }
-        .input-group label {
-            display: block; font-size: 11px; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 1px; color: var(--text-dim); margin-bottom: 6px;
-        }
-        .route-display {
-            font-family: 'JetBrains Mono', monospace; font-size: 13px;
-            background: var(--surface-2); border: 1px solid var(--border);
-            border-radius: 8px; padding: 10px 14px; color: var(--accent);
-        }
-        input[type="date"] {
-            width: 100%; padding: 10px 14px; background: var(--surface-2);
-            border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
-        }
-        input[type="date"]:focus { border-color: var(--accent); }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
-        .result { display: none; border-top: 1px solid var(--border); padding-top: 20px; }
-        .result.visible { display: block; animation: fadeUp 0.4s ease; }
-        .confidence-banner {
-            display: flex; align-items: center; gap: 18px;
-            padding: 20px; border-radius: 12px; margin-bottom: 16px;
-        }
-        .confidence-score {
-            width: 72px; height: 72px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'JetBrains Mono', monospace; font-size: 13px;
-            font-weight: 700; color: white; flex-shrink: 0;
-        }
-        .confidence-details h3 { font-size: 17px; margin-bottom: 4px; }
-        .confidence-details p { font-size: 13px; opacity: 0.85; line-height: 1.5; }
-        .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .stat-card {
-            background: var(--surface-2); border: 1px solid var(--border);
-            border-radius: 10px; padding: 14px; text-align: center;
-        }
-        .stat-value {
-            font-family: 'JetBrains Mono', monospace; font-size: 26px;
-            font-weight: 700; margin-bottom: 4px;
-        }
-        .stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
-        .jax-status { display: flex; gap: 16px; margin-bottom: 20px; }
-        .jax-status .stat-card { flex: 1; }
-        .forecast-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;
-        }
-        .forecast-day {
-            background: var(--surface-2); border: 1px solid var(--border);
-            border-radius: 10px; padding: 12px; text-align: center;
-            transition: all 0.3s; cursor: pointer;
-        }
-        .forecast-day:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .forecast-date { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
-        .forecast-mins { font-size: 20px; font-weight: 700; margin-bottom: 2px; }
-        .forecast-stress { font-size: 10px; font-family: 'JetBrains Mono', monospace; }
-        .stress-bar { height: 3px; border-radius: 2px; margin-top: 6px; background: var(--border); overflow: hidden; }
-        .stress-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
-        .footer { text-align: center; padding: 32px 0 16px; color: var(--text-dim); font-size: 11px; }
-        .footer a { color: var(--accent); text-decoration: none; }
-        .loading-spinner {
-            display: inline-block; width: 14px; height: 14px;
-            border: 2px solid var(--border); border-top-color: var(--accent);
-            border-radius: 50%; animation: spin 0.8s linear infinite;
-            margin-right: 6px; vertical-align: middle;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 768px) {
-            .planner-row, .board-controls { flex-direction: column; }
-            .result-stats, .jax-status { grid-template-columns: 1fr; }
-            h1 { font-size: 26px; }
-            .tabs { flex-wrap: wrap; }
-            .forecast-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
-        }
+        :root { --bg:#0a0e17; --surface:#111827; --surface-2:#1a2236; --border:#1e293b; --text:#e2e8f0; --text-dim:#64748b; --accent:#3b82f6; --accent-glow:rgba(59,130,246,0.15); --green:#22c55e; --yellow:#eab308; --orange:#f97316; --red:#ef4444; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+        body::before { content:''; position:fixed; top:0;left:0;right:0;bottom:0; background:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+        .container { max-width:1100px; margin:0 auto; padding:32px 24px; position:relative; z-index:1; }
+        .header { text-align:center; margin-bottom:36px; }
+        .header-badge { display:inline-flex; align-items:center; gap:8px; background:var(--accent-glow); border:1px solid rgba(59,130,246,0.2); padding:6px 16px; border-radius:100px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:16px; }
+        .header-badge .pulse { width:8px;height:8px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,0.4)} 50%{opacity:0.8;box-shadow:0 0 0 6px rgba(34,197,94,0)} }
+        h1 { font-size:38px; font-weight:700; letter-spacing:-1px; background:linear-gradient(135deg,#fff 0%,#94a3b8 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:6px; }
+        .subtitle { color:var(--text-dim); font-size:15px; }
+        .tabs { display:flex; gap:4px; margin-bottom:28px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:4px; }
+        .tab { flex:1; padding:12px; text-align:center; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.3s; color:var(--text-dim); }
+        .tab.active { background:var(--accent); color:white; }
+        .tab:hover:not(.active) { background:var(--surface-2); color:var(--text); }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; animation:fadeUp 0.4s ease; }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:28px; margin-bottom:24px; }
+        .card h2 { font-size:20px; font-weight:700; margin-bottom:6px; }
+        .card .desc { color:var(--text-dim); font-size:13px; margin-bottom:20px; }
+        /* Form elements */
+        label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); display:block; margin-bottom:6px; }
+        select, input[type="date"], input[type="time"], input[type="text"] { width:100%; padding:10px 14px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; outline:none; appearance:none; }
+        select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; }
+        select:focus, input:focus { border-color:var(--accent); }
+        input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator { filter:invert(1); }
+        .btn { padding:10px 24px; background:var(--accent); color:white; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.3s; white-space:nowrap; }
+        .btn:hover { background:#2563eb; transform:translateY(-1px); box-shadow:0 4px 16px rgba(59,130,246,0.3); }
+        .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        /* Grid layouts */
+        .form-row { display:flex; gap:14px; align-items:end; margin-bottom:20px; flex-wrap:wrap; }
+        .form-row .field { flex:1; min-width:140px; }
+        /* Departure board */
+        .board-controls { display:flex; gap:12px; align-items:end; margin-bottom:20px; }
+        .board-controls input { width:100px; font-family:'JetBrains Mono',monospace; font-size:16px; text-transform:uppercase; }
+        table { width:100%; border-collapse:collapse; }
+        th { padding:10px 14px; text-align:left; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); border-bottom:1px solid var(--border); }
+        td { padding:12px 14px; font-size:14px; border-bottom:1px solid rgba(30,41,59,0.5); }
+        tr:hover td { background:rgba(59,130,246,0.03); }
+        .late { color:var(--red); font-weight:600; }
+        .ontime { color:var(--green); font-weight:600; }
+        .cancelled { color:var(--red); font-weight:700; }
+        /* Journey results */
+        .journey-card { background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:12px; }
+        .journey-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+        .journey-time { font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; }
+        .journey-duration { font-size:13px; color:var(--text-dim); background:var(--surface); padding:4px 12px; border-radius:6px; }
+        .journey-arrow { color:var(--accent); margin:0 8px; }
+        .journey-legs { border-top:1px solid var(--border); padding-top:12px; }
+        .leg { display:flex; align-items:center; gap:12px; padding:8px 0; font-size:13px; }
+        .leg-icon { width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+        .leg-icon.train { background:rgba(59,130,246,0.15); color:var(--accent); }
+        .leg-icon.foot { background:rgba(34,197,94,0.15); color:var(--green); }
+        .leg-details { flex:1; }
+        .leg-details .leg-route { font-weight:600; }
+        .leg-details .leg-time { color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:12px; }
+        /* JAX banner in journey results */
+        .jax-banner { display:flex; align-items:center; gap:16px; padding:16px; border-radius:10px; margin-bottom:16px; }
+        .jax-badge { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:white; flex-shrink:0; }
+        .jax-info h4 { font-size:15px; margin-bottom:2px; }
+        .jax-info p { font-size:12px; opacity:0.8; }
+        /* Confidence planner */
+        .confidence-banner { display:flex; align-items:center; gap:18px; padding:20px; border-radius:12px; margin-bottom:16px; }
+        .confidence-score { width:72px;height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:white; flex-shrink:0; }
+        .confidence-details h3 { font-size:17px; margin-bottom:4px; }
+        .confidence-details p { font-size:13px; opacity:0.85; line-height:1.5; }
+        .result { display:none; border-top:1px solid var(--border); padding-top:20px; }
+        .result.visible { display:block; animation:fadeUp 0.4s ease; }
+        .result-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+        .stat-card { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; }
+        .stat-value { font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; margin-bottom:4px; }
+        .stat-label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; }
+        /* Forecast */
+        .jax-status { display:flex; gap:16px; margin-bottom:20px; }
+        .jax-status .stat-card { flex:1; }
+        .forecast-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; }
+        .forecast-day { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center; transition:all 0.3s; cursor:pointer; }
+        .forecast-day:hover { border-color:var(--accent); transform:translateY(-2px); }
+        .forecast-date { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); margin-bottom:4px; }
+        .forecast-mins { font-size:20px; font-weight:700; margin-bottom:2px; }
+        .forecast-stress { font-size:10px; font-family:'JetBrains Mono',monospace; }
+        .stress-bar { height:3px; border-radius:2px; margin-top:6px; background:var(--border); overflow:hidden; }
+        .stress-bar-fill { height:100%; border-radius:2px; transition:width 0.6s ease; }
+        /* Utils */
+        .footer { text-align:center; padding:32px 0 16px; color:var(--text-dim); font-size:11px; }
+        .footer a { color:var(--accent); text-decoration:none; }
+        .loading-spinner { display:inline-block; width:14px;height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin-right:6px; vertical-align:middle; }
+        .no-results { text-align:center; padding:32px; color:var(--text-dim); }
+        .swap-btn { background:none; border:1px solid var(--border); border-radius:8px; padding:8px; cursor:pointer; color:var(--text-dim); transition:all 0.3s; display:flex; align-items:center; }
+        .swap-btn:hover { border-color:var(--accent); color:var(--accent); }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @media(max-width:768px) { .form-row,.board-controls{flex-direction:column} .result-stats,.jax-status{grid-template-columns:1fr} h1{font-size:26px} .tabs{flex-wrap:wrap} .forecast-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))} }
     </style>
 </head>
 <body>
@@ -203,25 +106,70 @@
     <div class="header">
         <div class="header-badge"><span class="pulse"></span> JAX Neural Network · Live</div>
         <h1>Manchester → Euston</h1>
-        <p class="subtitle">AI-powered delay prediction · Live departures · Journey planner</p>
+        <p class="subtitle">AI-powered delay prediction · Journey planner · Live departures</p>
     </div>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab(this, 'board')">🚆 Departure Board</div>
-        <div class="tab" onclick="switchTab(this, 'planner')">🗓 Journey Planner</div>
-        <div class="tab" onclick="switchTab(this, 'forecast')">📈 30-Day Forecast</div>
+        <div class="tab active" onclick="switchTab(this,'planner')">🗓 Journey Planner</div>
+        <div class="tab" onclick="switchTab(this,'board')">🚆 Departure Board</div>
+        <div class="tab" onclick="switchTab(this,'confidence')">🧠 AI Confidence</div>
+        <div class="tab" onclick="switchTab(this,'forecast')">📈 30-Day Forecast</div>
     </div>
 
-    <!-- TAB 1: Departure Board -->
-    <div class="tab-content active" id="tab-board">
+    <!-- TAB 1: Journey Planner (TransportAPI) -->
+    <div class="tab-content active" id="tab-planner">
+        <div class="card">
+            <h2>🗓 Journey Planner</h2>
+            <p class="desc">Plan your train journey between Manchester and Euston. Powered by TransportAPI with JAX delay predictions.</p>
+            <div class="form-row">
+                <div class="field">
+                    <label>From</label>
+                    <select id="jpFrom">
+                        <option value="MAN">Manchester Piccadilly</option>
+                        <option value="SPT">Stockport</option>
+                        <option value="MAC">Macclesfield</option>
+                        <option value="SOT">Stoke-on-Trent</option>
+                        <option value="CRE">Crewe</option>
+                        <option value="RUG">Rugby</option>
+                        <option value="MKC">Milton Keynes Central</option>
+                        <option value="EUS">London Euston</option>
+                    </select>
+                </div>
+                <button class="swap-btn" onclick="swapStations()" title="Swap">⇄</button>
+                <div class="field">
+                    <label>To</label>
+                    <select id="jpTo">
+                        <option value="MAN">Manchester Piccadilly</option>
+                        <option value="SPT">Stockport</option>
+                        <option value="MAC">Macclesfield</option>
+                        <option value="SOT">Stoke-on-Trent</option>
+                        <option value="CRE">Crewe</option>
+                        <option value="RUG">Rugby</option>
+                        <option value="MKC">Milton Keynes Central</option>
+                        <option value="EUS" selected>London Euston</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Date</label>
+                    <input type="date" id="jpDate">
+                </div>
+                <div class="field">
+                    <label>Time</label>
+                    <input type="time" id="jpTime">
+                </div>
+                <button class="btn" id="jpBtn" onclick="planTrip()">Find Trains</button>
+            </div>
+            <div id="jpResults"></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: Departure Board -->
+    <div class="tab-content" id="tab-board">
         <div class="card">
             <h2>🚆 Live Departure Board</h2>
             <p class="desc">Enter any UK station CRS code to view live departures.</p>
             <div class="board-controls">
-                <div>
-                    <label>Station CRS</label>
-                    <input type="text" id="crsInput" value="MAN" maxlength="3">
-                </div>
+                <div><label>Station CRS</label><input type="text" id="crsInput" value="MAN" maxlength="3"></div>
                 <button class="btn" onclick="getBoard()">Load Board</button>
             </div>
             <table id="boardTable">
@@ -231,21 +179,14 @@
         </div>
     </div>
 
-    <!-- TAB 2: Journey Planner -->
-    <div class="tab-content" id="tab-planner">
+    <!-- TAB 3: AI Confidence -->
+    <div class="tab-content" id="tab-confidence">
         <div class="card">
-            <h2>🗓 Journey Planner</h2>
-            <p class="desc">Select a travel date to see the JAX model's delay prediction and confidence score.</p>
-            <div class="planner-row">
-                <div class="input-group">
-                    <label>Route</label>
-                    <div class="route-display">MAN → SPT → MAC → SOT → CRE → RUG → MKC → EUS</div>
-                </div>
-                <div class="input-group">
-                    <label>Travel Date</label>
-                    <input type="date" id="travelDate">
-                </div>
-                <button class="btn" onclick="planJourney()">Check Forecast</button>
+            <h2>🧠 AI Delay Confidence</h2>
+            <p class="desc">Check the JAX model's delay prediction and confidence score for any date.</p>
+            <div class="form-row">
+                <div class="field"><label>Travel Date</label><input type="date" id="travelDate"></div>
+                <button class="btn" onclick="checkConfidence()">Check Forecast</button>
             </div>
             <div class="result" id="result">
                 <div class="confidence-banner" id="confidenceBanner">
@@ -264,197 +205,219 @@
         </div>
     </div>
 
-    <!-- TAB 3: 30-Day Forecast -->
+    <!-- TAB 4: 30-Day Forecast -->
     <div class="tab-content" id="tab-forecast">
         <div class="card">
             <h2>📈 30-Day JAX Forecast</h2>
-            <p class="desc">Predicted daily delay minutes and route stress for the next 30 days. Click any day to plan.</p>
-            <div class="jax-status" id="jaxStatus">
+            <p class="desc">Predicted daily delay and route stress. Click any day to check confidence.</p>
+            <div class="jax-status">
                 <div class="stat-card"><div class="stat-value" id="jaxRmse">--</div><div class="stat-label">Model RMSE</div></div>
                 <div class="stat-card"><div class="stat-value" id="jaxDays">--</div><div class="stat-label">Training Days</div></div>
                 <div class="stat-card"><div class="stat-value" id="jaxUpdated">--</div><div class="stat-label">Last Updated</div></div>
             </div>
-            <div class="forecast-grid" id="forecastGrid">
-                <div style="grid-column: 1/-1; text-align: center; padding: 32px; color: var(--text-dim);">
-                    <span class="loading-spinner"></span> Loading forecast data...
-                </div>
-            </div>
+            <div class="forecast-grid" id="forecastGrid"><div class="no-results"><span class="loading-spinner"></span> Loading forecast data...</div></div>
         </div>
     </div>
 
     <div class="footer">
-        TrainJAX · Powered by <a href="#">JAX/Flax Neural Network</a> · Manchester to Euston Route
-        <br>Predictions from Digital Ocean PostgreSQL · Live data from Network Rail · Scraper runs every 60s
+        TrainJAX · <a href="#">JAX/Flax Neural Network</a> · Manchester to Euston
+        <br>Journey planning by TransportAPI · Predictions from PostgreSQL · Live data from Network Rail
     </div>
 </div>
 
 <script>
-    function switchTab(el, name) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById('tab-' + name).classList.add('active');
-        el.classList.add('active');
-    }
+function switchTab(el, name) {
+    document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+    document.getElementById('tab-'+name).classList.add('active');
+    el.classList.add('active');
+}
 
-    document.getElementById('travelDate').valueAsDate = new Date();
+// Set defaults
+var now = new Date();
+document.getElementById('jpDate').valueAsDate = now;
+document.getElementById('travelDate').valueAsDate = now;
+document.getElementById('jpTime').value = now.toTimeString().substring(0,5);
 
-    async function getBoard() {
-        const crs = document.getElementById('crsInput').value.toUpperCase();
-        const tbody = document.querySelector('#boardTable tbody');
-        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim)"><span class="loading-spinner"></span> Loading...</td></tr>';
-        try {
-            const response = await fetch('/api/departures/' + crs);
-            if (!response.ok) throw new Error('Network error');
-            const data = await response.json();
-            tbody.innerHTML = '';
-            const services = data.trainServices || [];
-            if (services.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim)">No departures found.</td></tr>';
-                return;
+function swapStations() {
+    var f = document.getElementById('jpFrom');
+    var t = document.getElementById('jpTo');
+    var tmp = f.value;
+    f.value = t.value;
+    t.value = tmp;
+}
+
+// ===== JOURNEY PLANNER =====
+async function planTrip() {
+    var from = document.getElementById('jpFrom').value;
+    var to = document.getElementById('jpTo').value;
+    var date = document.getElementById('jpDate').value;
+    var time = document.getElementById('jpTime').value;
+    var btn = document.getElementById('jpBtn');
+    var results = document.getElementById('jpResults');
+
+    if (from === to) { results.innerHTML = '<div class="no-results">Origin and destination must be different.</div>'; return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Searching...';
+    results.innerHTML = '<div class="no-results"><span class="loading-spinner"></span> Finding trains...</div>';
+
+    try {
+        var res = await fetch('/api/journey?from='+from+'&to='+to+'&date='+date+'&time='+time);
+        var data = await res.json();
+
+        if (data.status === 'ok') {
+            var html = '';
+
+            // JAX prediction banner
+            if (data.jax_prediction) {
+                var jp = data.jax_prediction;
+                html += '<div class="jax-banner" style="background:'+jp.color+'15;border:1px solid '+jp.color+'30">';
+                html += '<div class="jax-badge" style="background:'+jp.color+'">'+jp.confidence+'</div>';
+                html += '<div class="jax-info"><h4 style="color:'+jp.color+'">'+jp.confidence+' Confidence for '+date+'</h4>';
+                html += '<p>JAX predicts '+jp.stress_coefficient*100+'% route stress · Model accuracy ±'+jp.rmse+' mins</p></div></div>';
             }
-            services.forEach(function(train) {
-                var row = document.createElement('tr');
-                var std = train.std || 'N/A';
-                var destName = 'Unknown';
-                if (train.destination) {
-                    if (Array.isArray(train.destination)) {
-                        destName = (train.destination[0] && train.destination[0].locationName) || 'Unknown';
-                    } else if (train.destination.location) {
-                        var loc = Array.isArray(train.destination.location) ? train.destination.location[0] : train.destination.location;
-                        destName = loc.locationName || 'Unknown';
-                    } else if (train.destination.locationName) {
-                        destName = train.destination.locationName;
-                    }
-                }
-                var plat = train.platform || '-';
-                var etd = train.etd || 'N/A';
-                var operator = train.operator || train.operatorCode || '';
-                var isCancelled = train.isCancelled || false;
-                var statusClass = 'ontime';
-                var statusText = etd;
-                if (isCancelled || etd.toLowerCase() === 'cancelled') { statusClass = 'cancelled'; statusText = 'CANCELLED'; }
-                else if (etd !== 'On time' && etd !== 'N/A') { statusClass = 'late'; }
-                var displayTime = String(std).substring(0, 5);
-                try { displayTime = new Date(std).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); } catch(e) {}
-                row.innerHTML = '<td style="font-family:JetBrains Mono,monospace;font-weight:600">' + displayTime + '</td><td>' + destName + '</td><td style="text-align:center">' + plat + '</td><td class="' + statusClass + '">' + statusText + '</td><td style="color:var(--text-dim)">' + operator + '</td>';
-                tbody.appendChild(row);
-            });
-        } catch (error) {
-            tbody.innerHTML = '<tr><td colspan="5" style="color:var(--red)">Error loading data.</td></tr>';
-        }
-    }
 
-    async function planJourney() {
-        var date = document.getElementById('travelDate').value;
-        if (!date) return;
-        var result = document.getElementById('result');
-        result.classList.add('visible');
-        try {
-            var res = await fetch('/api/plan/' + date);
-            var data = await res.json();
-            if (data.status === 'ok') {
-                document.getElementById('confidenceBanner').style.background = data.color + '15';
-                document.getElementById('confidenceBanner').style.border = '1px solid ' + data.color + '30';
-                document.getElementById('confidenceScore').style.background = data.color;
-                document.getElementById('confidenceScore').textContent = data.confidence;
-                document.getElementById('confidenceTitle').textContent = data.confidence + ' Confidence';
-                document.getElementById('confidenceTitle').style.color = data.color;
-                document.getElementById('confidenceText').textContent = data.recommendation;
-                document.getElementById('statMins').textContent = Math.round(data.predicted_minutes);
-                document.getElementById('statMins').style.color = data.color;
-                document.getElementById('statStress').textContent = (data.stress_coefficient * 100).toFixed(1) + '%';
-                document.getElementById('statRmse').textContent = '±' + data.rmse;
+            if (data.journeys.length === 0) {
+                html += '<div class="no-results">No train journeys found for this route and time. Try a different time.</div>';
             } else {
-                document.getElementById('confidenceScore').style.background = 'var(--text-dim)';
-                document.getElementById('confidenceScore').textContent = '—';
-                document.getElementById('confidenceTitle').textContent = 'No Data';
-                document.getElementById('confidenceTitle').style.color = 'var(--text-dim)';
-                document.getElementById('confidenceText').textContent = data.message || 'No prediction for this date.';
-            }
-        } catch (e) {
-            document.getElementById('confidenceTitle').textContent = 'Error';
-            document.getElementById('confidenceText').textContent = 'Could not retrieve prediction data.';
-        }
-    }
-
-    async function loadForecast() {
-        try {
-            var res = await fetch('/api/predictions');
-            var data = await res.json();
-            console.log('Predictions response:', data);
-
-            if (data.status === 'ok' && data.predictions && data.predictions.length > 0) {
-                var all = data.predictions;
-                var forecasts = [];
-                var actuals = [];
-
-                for (var i = 0; i < all.length; i++) {
-                    if (all[i].data_type === 'Forecast') forecasts.push(all[i]);
-                    else actuals.push(all[i]);
-                }
-
-                console.log('Forecasts found:', forecasts.length, 'Actuals:', actuals.length);
-
-                if (all.length > 0) {
-                    document.getElementById('jaxRmse').textContent = '±' + all[0].rmse;
-                    document.getElementById('jaxDays').textContent = actuals.length;
-                    var updated = all[0].updated_at;
-                    if (updated) {
-                        var d = new Date(updated);
-                        document.getElementById('jaxUpdated').textContent = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                for (var i = 0; i < data.journeys.length; i++) {
+                    var j = data.journeys[i];
+                    html += '<div class="journey-card">';
+                    html += '<div class="journey-header">';
+                    html += '<div><span class="journey-time">'+j.departure+'</span><span class="journey-arrow">→</span><span class="journey-time">'+j.arrival+'</span></div>';
+                    html += '<div class="journey-duration">'+j.duration+'</div></div>';
+                    html += '<div class="journey-legs">';
+                    for (var k = 0; k < j.legs.length; k++) {
+                        var leg = j.legs[k];
+                        var icon = leg.mode === 'foot' ? '🚶' : '🚆';
+                        var iconClass = leg.mode === 'foot' ? 'foot' : 'train';
+                        html += '<div class="leg">';
+                        html += '<div class="leg-icon '+iconClass+'">'+icon+'</div>';
+                        html += '<div class="leg-details">';
+                        html += '<div class="leg-route">'+leg.from+' → '+leg.to+'</div>';
+                        if (leg.destination) html += '<div class="leg-time">towards '+leg.destination+' · '+leg.departure+' - '+leg.arrival+'</div>';
+                        else html += '<div class="leg-time">'+leg.departure+' - '+leg.arrival+' · '+leg.duration+'</div>';
+                        html += '</div></div>';
                     }
+                    html += '</div></div>';
                 }
-
-                var grid = document.getElementById('forecastGrid');
-                if (forecasts.length === 0) {
-                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:32px;">No forecast data yet. Model is still training.</div>';
-                    return;
-                }
-
-                var html = '';
-                for (var j = 0; j < forecasts.length; j++) {
-                    var f = forecasts[j];
-                    var dateStr = f.forecast_date;
-                    var parts = dateStr.split('-');
-                    var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-                    var label = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-                    var stress = parseFloat(f.stress_coefficient);
-                    var color = stressColor(stress);
-                    var mins = Math.round(f.predicted_minutes);
-                    var pct = Math.min(stress * 100, 100).toFixed(0);
-
-                    html += '<div class="forecast-day" onclick="selectDate(\'' + dateStr + '\')">';
-                    html += '<div class="forecast-date">' + label + '</div>';
-                    html += '<div class="forecast-mins" style="color:' + color + '">' + mins + '</div>';
-                    html += '<div class="forecast-stress" style="color:' + color + '">' + pct + '% stress</div>';
-                    html += '<div class="stress-bar"><div class="stress-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>';
-                    html += '</div>';
-                }
-                grid.innerHTML = html;
-            } else {
-                document.getElementById('forecastGrid').innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:32px;">No forecast data available yet.</div>';
             }
-        } catch (e) {
-            console.error('Forecast load error:', e);
-            document.getElementById('forecastGrid').innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:32px;">Could not load forecast. The model may still be training.</div>';
+            html += '<div style="text-align:right;font-size:11px;color:var(--text-dim);margin-top:8px">Source: '+data.source+'</div>';
+            results.innerHTML = html;
+        } else {
+            results.innerHTML = '<div class="no-results">'+(data.message||'Could not find journeys.')+'</div>';
         }
+    } catch(e) {
+        results.innerHTML = '<div class="no-results">Error connecting to journey planner.</div>';
     }
+    btn.disabled = false;
+    btn.textContent = 'Find Trains';
+}
 
-    function selectDate(dateStr) {
-        document.getElementById('travelDate').value = dateStr;
-        switchTab(document.querySelectorAll('.tab')[1], 'planner');
-        planJourney();
-    }
+// ===== DEPARTURE BOARD =====
+async function getBoard() {
+    var crs = document.getElementById('crsInput').value.toUpperCase();
+    var tbody = document.querySelector('#boardTable tbody');
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim)"><span class="loading-spinner"></span> Loading...</td></tr>';
+    try {
+        var response = await fetch('/api/departures/'+crs);
+        if (!response.ok) throw new Error('err');
+        var data = await response.json();
+        tbody.innerHTML = '';
+        var services = data.trainServices || [];
+        if (services.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim)">No departures found.</td></tr>'; return; }
+        services.forEach(function(train) {
+            var row = document.createElement('tr');
+            var std = train.std||'N/A';
+            var destName = 'Unknown';
+            if (train.destination) {
+                if (Array.isArray(train.destination)) destName = (train.destination[0]&&train.destination[0].locationName)||'Unknown';
+                else if (train.destination.location) { var loc = Array.isArray(train.destination.location)?train.destination.location[0]:train.destination.location; destName=loc.locationName||'Unknown'; }
+                else if (train.destination.locationName) destName=train.destination.locationName;
+            }
+            var plat=train.platform||'-', etd=train.etd||'N/A', operator=train.operator||train.operatorCode||'';
+            var isCancelled=train.isCancelled||false;
+            var sc='ontime',st=etd;
+            if(isCancelled||etd.toLowerCase()==='cancelled'){sc='cancelled';st='CANCELLED';}
+            else if(etd!=='On time'&&etd!=='N/A')sc='late';
+            var dt=String(std).substring(0,5); try{dt=new Date(std).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}catch(e){}
+            row.innerHTML='<td style="font-family:JetBrains Mono,monospace;font-weight:600">'+dt+'</td><td>'+destName+'</td><td style="text-align:center">'+plat+'</td><td class="'+sc+'">'+st+'</td><td style="color:var(--text-dim)">'+operator+'</td>';
+            tbody.appendChild(row);
+        });
+    } catch(e) { tbody.innerHTML='<tr><td colspan="5" style="color:var(--red)">Error loading data.</td></tr>'; }
+}
 
-    function stressColor(stress) {
-        if (stress < 0.2) return '#22c55e';
-        if (stress < 0.4) return '#84cc16';
-        if (stress < 0.6) return '#eab308';
-        if (stress < 0.8) return '#f97316';
-        return '#ef4444';
-    }
+// ===== AI CONFIDENCE =====
+async function checkConfidence() {
+    var date = document.getElementById('travelDate').value;
+    if (!date) return;
+    document.getElementById('result').classList.add('visible');
+    try {
+        var res = await fetch('/api/plan/'+date);
+        var data = await res.json();
+        if (data.status==='ok') {
+            document.getElementById('confidenceBanner').style.background=data.color+'15';
+            document.getElementById('confidenceBanner').style.border='1px solid '+data.color+'30';
+            document.getElementById('confidenceScore').style.background=data.color;
+            document.getElementById('confidenceScore').textContent=data.confidence;
+            document.getElementById('confidenceTitle').textContent=data.confidence+' Confidence';
+            document.getElementById('confidenceTitle').style.color=data.color;
+            document.getElementById('confidenceText').textContent=data.recommendation;
+            document.getElementById('statMins').textContent=Math.round(data.predicted_minutes);
+            document.getElementById('statMins').style.color=data.color;
+            document.getElementById('statStress').textContent=(data.stress_coefficient*100).toFixed(1)+'%';
+            document.getElementById('statRmse').textContent='±'+data.rmse;
+        } else {
+            document.getElementById('confidenceScore').style.background='var(--text-dim)';
+            document.getElementById('confidenceScore').textContent='—';
+            document.getElementById('confidenceTitle').textContent='No Data';
+            document.getElementById('confidenceTitle').style.color='var(--text-dim)';
+            document.getElementById('confidenceText').textContent=data.message||'No prediction for this date.';
+        }
+    } catch(e) { document.getElementById('confidenceTitle').textContent='Error'; document.getElementById('confidenceText').textContent='Could not retrieve data.'; }
+}
 
-    loadForecast();
+// ===== 30-DAY FORECAST =====
+async function loadForecast() {
+    try {
+        var res = await fetch('/api/predictions');
+        var data = await res.json();
+        if (data.status==='ok'&&data.predictions&&data.predictions.length>0) {
+            var all=data.predictions, forecasts=[], actuals=[];
+            for(var i=0;i<all.length;i++){if(all[i].data_type==='Forecast')forecasts.push(all[i]);else actuals.push(all[i]);}
+            if(all.length>0){
+                document.getElementById('jaxRmse').textContent='±'+all[0].rmse;
+                document.getElementById('jaxDays').textContent=actuals.length;
+                if(all[0].updated_at){var d=new Date(all[0].updated_at);document.getElementById('jaxUpdated').textContent=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});}
+            }
+            var grid=document.getElementById('forecastGrid');
+            if(forecasts.length===0){grid.innerHTML='<div class="no-results">No forecast data yet.</div>';return;}
+            var html='';
+            for(var j=0;j<forecasts.length;j++){
+                var f=forecasts[j],ds=f.forecast_date,parts=ds.split('-'),dateObj=new Date(parts[0],parts[1]-1,parts[2]);
+                var lbl=dateObj.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+                var stress=parseFloat(f.stress_coefficient),color=stressColor(stress),mins=Math.round(f.predicted_minutes),pct=Math.min(stress*100,100).toFixed(0);
+                html+='<div class="forecast-day" onclick="selectForecastDate(\''+ds+'\')">';
+                html+='<div class="forecast-date">'+lbl+'</div>';
+                html+='<div class="forecast-mins" style="color:'+color+'">'+mins+'</div>';
+                html+='<div class="forecast-stress" style="color:'+color+'">'+pct+'% stress</div>';
+                html+='<div class="stress-bar"><div class="stress-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div></div>';
+            }
+            grid.innerHTML=html;
+        }
+    } catch(e) { document.getElementById('forecastGrid').innerHTML='<div class="no-results">Could not load forecast.</div>'; }
+}
+
+function selectForecastDate(ds) {
+    document.getElementById('travelDate').value=ds;
+    switchTab(document.querySelectorAll('.tab')[2],'confidence');
+    checkConfidence();
+}
+
+function stressColor(s){if(s<0.2)return'#22c55e';if(s<0.4)return'#84cc16';if(s<0.6)return'#eab308';if(s<0.8)return'#f97316';return'#ef4444';}
+
+loadForecast();
 </script>
 </body>
 </html>

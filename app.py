@@ -429,6 +429,158 @@ def departures(crs):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# --- TRANSPORTAPI JOURNEY PLANNER ---
+TRANSPORT_API_ID = os.environ.get("TRANSPORT_API_ID", "28e3461f")
+TRANSPORT_API_KEY = os.environ.get("TRANSPORT_API_KEY", "49d8c34f11b8b329e4f4c979820dca62")
+
+# Station coordinates for the Manchester-Euston route
+ROUTE_STATIONS = {
+    'MAN': {'name': 'Manchester Piccadilly', 'crs': 'MAN', 'lat': 53.4774, 'lon': -2.2309},
+    'SPT': {'name': 'Stockport', 'crs': 'SPT', 'lat': 53.4052, 'lon': -2.1634},
+    'MAC': {'name': 'Macclesfield', 'crs': 'MAC', 'lat': 53.2586, 'lon': -2.1253},
+    'SOT': {'name': 'Stoke-on-Trent', 'crs': 'SOT', 'lat': 52.9905, 'lon': -2.1814},
+    'CRE': {'name': 'Crewe', 'crs': 'CRE', 'lat': 53.0876, 'lon': -2.4317},
+    'RUG': {'name': 'Rugby', 'crs': 'RUG', 'lat': 52.3785, 'lon': -1.2502},
+    'MKC': {'name': 'Milton Keynes Central', 'crs': 'MKC', 'lat': 52.0345, 'lon': -0.7740},
+    'EUS': {'name': 'London Euston', 'crs': 'EUS', 'lat': 51.5282, 'lon': -0.1337},
+}
+
+@app.route('/api/stations')
+def stations():
+    """Return list of route stations."""
+    return jsonify({'status': 'ok', 'stations': [
+        {'crs': s['crs'], 'name': s['name'], 'lat': s['lat'], 'lon': s['lon']}
+        for s in ROUTE_STATIONS.values()
+    ]})
+
+@app.route('/api/journey')
+def journey():
+    """Plan a journey using TransportAPI between two route stations."""
+    from_crs = request.args.get('from', '').upper()
+    to_crs = request.args.get('to', '').upper()
+    date = request.args.get('date', '')
+    time_val = request.args.get('time', '')
+
+    if from_crs not in ROUTE_STATIONS or to_crs not in ROUTE_STATIONS:
+        return jsonify({'status': 'error', 'message': 'Both stations must be on the Manchester-Euston route.'}), 400
+
+    if from_crs == to_crs:
+        return jsonify({'status': 'error', 'message': 'Origin and destination must be different.'}), 400
+
+    # Build TransportAPI journey planner URL
+    from_station = ROUTE_STATIONS[from_crs]
+    to_station = ROUTE_STATIONS[to_crs]
+
+    params = {
+        'from': f"crs:{from_crs}",
+        'to': f"crs:{to_crs}",
+        'modes': 'train',
+        'service': 'silverrail',
+        'app_id': TRANSPORT_API_ID,
+        'app_key': TRANSPORT_API_KEY,
+    }
+    if date:
+        params['date'] = date
+    if time_val:
+        params['time'] = time_val
+
+    try:
+        url = "https://transportapi.com/v3/uk/public_journey.json"
+        response = requests.get(url, params=params, timeout=15)
+
+        if response.status_code == 200:
+            journey_data = response.json()
+            routes = journey_data.get('routes', [])
+
+            # Get JAX prediction for the travel date
+            jax_prediction = None
+            if date:
+                try:
+                    conn = get_db()
+                    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                    cur.execute("SELECT predicted_minutes, stress_coefficient, rmse FROM jax_predictions WHERE forecast_date = %s", (date,))
+                    row = cur.fetchone()
+                    conn.close()
+                    if row:
+                        stress = float(row['stress_coefficient'])
+                        if stress < 0.2:
+                            confidence, color = 'HIGH', '#22c55e'
+                        elif stress < 0.4:
+                            confidence, color = 'GOOD', '#84cc16'
+                        elif stress < 0.6:
+                            confidence, color = 'MODERATE', '#eab308'
+                        elif stress < 0.8:
+                            confidence, color = 'LOW', '#f97316'
+                        else:
+                            confidence, color = 'POOR', '#ef4444'
+                        jax_prediction = {
+                            'predicted_minutes': round(float(row['predicted_minutes']), 1),
+                            'stress_coefficient': round(stress, 4),
+                            'rmse': round(float(row['rmse']), 2),
+                            'confidence': confidence,
+                            'color': color
+                        }
+                except:
+                    pass
+
+            # Parse routes into clean format
+            journeys = []
+            for route in routes:
+                legs = []
+                for part in route.get('route_parts', []):
+                    legs.append({
+                        'mode': part.get('mode', 'train'),
+                        'from': part.get('from_point_name', ''),
+                        'to': part.get('to_point_name', ''),
+                        'destination': part.get('destination', ''),
+                        'departure': part.get('departure_time', ''),
+                        'arrival': part.get('arrival_time', ''),
+                        'duration': part.get('duration', ''),
+                    })
+                journeys.append({
+                    'duration': route.get('duration', ''),
+                    'departure': route.get('departure_time', ''),
+                    'arrival': route.get('arrival_time', ''),
+                    'legs': legs
+                })
+
+            return jsonify({
+                'status': 'ok',
+                'from': from_station,
+                'to': to_station,
+                'date': date,
+                'time': time_val,
+                'journeys': journeys,
+                'jax_prediction': jax_prediction,
+                'source': journey_data.get('source', 'TransportAPI')
+            })
+        else:
+            return jsonify({'status': 'error', 'message': f'TransportAPI returned {response.status_code}'}), response.status_code
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/station_timetable/<crs>')
+def station_timetable(crs):
+    """Get live train departures from TransportAPI for a route station."""
+    crs = crs.upper()
+    if crs not in ROUTE_STATIONS:
+        return jsonify({'status': 'error', 'message': 'Station not on route.'}), 400
+
+    params = {
+        'live': 'true',
+        'app_id': TRANSPORT_API_ID,
+        'app_key': TRANSPORT_API_KEY,
+    }
+
+    try:
+        url = f"https://transportapi.com/v3/uk/train/station_timetables/crs:{crs}.json"
+        response = requests.get(url, params=params, timeout=15)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        return jsonify({'status': 'error', 'message': f'API returned {response.status_code}'}), response.status_code
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/api/predictions')
 def predictions():
     """Return all JAX predictions from the database."""
