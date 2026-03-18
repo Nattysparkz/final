@@ -55,6 +55,14 @@ def init_db():
         conn = get_db()
         with conn.cursor() as cur:
             cur.execute("""
+                CREATE TABLE IF NOT EXISTS rail_events (
+                    id SERIAL PRIMARY KEY,
+                    event_datetime TIMESTAMP,
+                    pfpi_minutes DOUBLE PRECISION,
+                    non_pfpi_minutes DOUBLE PRECISION,
+                    source_file TEXT
+                );
+                CREATE INDEX IF NOT EXISTS idx_event_datetime ON rail_events(event_datetime);
                 CREATE TABLE IF NOT EXISTS jax_predictions (
                     id SERIAL PRIMARY KEY,
                     forecast_date DATE,
@@ -297,25 +305,105 @@ def run_jax_training():
     except Exception as e:
         print(f"⚠️ Could not save predictions: {e}")
 
+# --- DATA SCRAPER (HARVESTS LIVE DATA INTO DATABASE) ---
+def scrape_and_store():
+    """Scan all route stations and store delay data in rail_events table for future training."""
+    headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
+    rows_saved = 0
+
+    for station in MANCHESTER_LINE:
+        current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
+        url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{station}/{current_time}?numRows=15&timeWindow=120"
+
+        try:
+            response = requests.get(url, headers=headers, timeout=15, verify=False)
+            if response.status_code == 200:
+                data = response.json()
+                services = data.get('trainServices', [])
+                station_delay = 0
+
+                for train in services:
+                    std = train.get('std', 'N/A')
+                    etd = train.get('etd', 'N/A')
+                    atd = train.get('atd', 'N/A')
+                    is_cancelled = train.get('isCancelled', False)
+                    flag = atd if atd != 'N/A' else etd
+                    flag_lower = str(flag).lower().strip()
+
+                    if is_cancelled or flag_lower == 'cancelled':
+                        station_delay += 60
+                    elif flag_lower not in ['on time', 'n/a', 'no report', 'delayed'] and std != 'N/A':
+                        try:
+                            try:
+                                dt_std = datetime.fromisoformat(std)
+                                dt_flag = datetime.fromisoformat(flag)
+                            except ValueError:
+                                dt_std = datetime.strptime(str(std).strip()[:5], '%H:%M')
+                                dt_flag = datetime.strptime(str(flag).strip()[:5], '%H:%M')
+                            delay = (dt_flag - dt_std).total_seconds() / 60
+                            if delay < -720: delay += 1440
+                            elif delay > 720: delay -= 1440
+                            if delay > 0:
+                                station_delay += delay
+                        except:
+                            pass
+
+                # Store in database
+                try:
+                    conn = get_db()
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "INSERT INTO rail_events (event_datetime, pfpi_minutes, non_pfpi_minutes, source_file) VALUES (%s, %s, %s, %s)",
+                            (datetime.now(), float(station_delay), 0.0, f"scraper_{station}")
+                        )
+                    conn.commit()
+                    conn.close()
+                    rows_saved += 1
+                except Exception as e:
+                    print(f"⚠️ Scraper DB error for {station}: {e}")
+        except:
+            pass
+
+        time.sleep(0.5)
+
+    if rows_saved > 0:
+        print(f"📥 Scraper: Saved {rows_saved} station readings to database.")
+    return rows_saved
+
 # --- BACKGROUND TASKS ---
 def background_tasks():
-    """Run JAX training and live scan on startup, then periodically."""
+    """Run scraper, live scan, and JAX training on a schedule."""
     time.sleep(5)  # Wait for app to start
-    
+
     # Initial run
     print("📡 Scanning live departures...")
     scan_live_departures()
+    print("📥 Running initial data scrape...")
+    scrape_and_store()
     run_jax_training()
-    
-    # Re-scan live every 5 minutes, retrain every 6 hours
+
+    # Schedule:
+    # - Scrape every 60 seconds (new training data)
+    # - Update live snapshot every 5 minutes
+    # - Retrain JAX every 6 hours
+    last_live = time.time()
     last_train = time.time()
+
     while True:
-        time.sleep(300)  # 5 minutes
+        time.sleep(60)  # Every 60 seconds
         try:
-            print("📡 Refreshing live departures...")
-            scan_live_departures()
-            
-            if time.time() - last_train > 21600:  # 6 hours
+            # Always scrape
+            scrape_and_store()
+
+            # Live snapshot every 5 minutes
+            if time.time() - last_live > 300:
+                print("📡 Refreshing live departures...")
+                scan_live_departures()
+                last_live = time.time()
+
+            # Retrain every 6 hours
+            if time.time() - last_train > 21600:
+                print("🔄 Retraining JAX model with new data...")
                 run_jax_training()
                 last_train = time.time()
         except Exception as e:
@@ -434,6 +522,32 @@ def plan(date):
 @app.route('/health')
 def health():
     return jsonify({'status': 'ok', 'time': datetime.now().isoformat()})
+
+@app.route('/api/stats')
+def stats():
+    """Return database stats and scraper info."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM rail_events")
+        total_events = cur.fetchone()[0]
+        cur.execute("SELECT MIN(event_datetime), MAX(event_datetime) FROM rail_events")
+        date_range = cur.fetchone()
+        cur.execute("SELECT COUNT(*) FROM rail_events WHERE source_file LIKE 'scraper_%'")
+        scraped_rows = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM jax_predictions WHERE data_type = 'Forecast'")
+        forecast_days = cur.fetchone()[0]
+        conn.close()
+        return jsonify({
+            'status': 'ok',
+            'total_events': total_events,
+            'scraped_events': scraped_rows,
+            'date_from': str(date_range[0]) if date_range[0] else None,
+            'date_to': str(date_range[1]) if date_range[1] else None,
+            'forecast_days': forecast_days
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # --- START ---
 init_db()
