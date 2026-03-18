@@ -474,8 +474,6 @@ def journey():
     params = {
         'from': f"crs:{from_crs}",
         'to': f"crs:{to_crs}",
-        'modes': 'train',
-        'service': 'silverrail',
         'app_id': TRANSPORT_API_ID,
         'app_key': TRANSPORT_API_KEY,
     }
@@ -486,7 +484,10 @@ def journey():
 
     try:
         url = "https://transportapi.com/v3/uk/public_journey.json"
+        print(f"📍 Journey planner: {from_crs} → {to_crs} on {date} at {time_val}")
+        print(f"   URL: {url}?{requests.compat.urlencode(params)}")
         response = requests.get(url, params=params, timeout=15)
+        print(f"   Response: {response.status_code}")
 
         if response.status_code == 200:
             journey_data = response.json()
@@ -555,7 +556,13 @@ def journey():
                 'source': journey_data.get('source', 'TransportAPI')
             })
         else:
-            return jsonify({'status': 'error', 'message': f'TransportAPI returned {response.status_code}'}), response.status_code
+            error_body = ''
+            try:
+                error_body = response.text[:300]
+            except:
+                pass
+            print(f"   TransportAPI error: {response.status_code} - {error_body}")
+            return jsonify({'status': 'error', 'message': f'TransportAPI returned {response.status_code}: {error_body}'}), 500
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
