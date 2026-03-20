@@ -455,7 +455,7 @@ def stations():
 
 @app.route('/api/journey')
 def journey():
-    """Plan a journey using TransportAPI between two route stations."""
+    """Plan a journey using TransportAPI station timetables with calling_at filter."""
     from_crs = request.args.get('from', '').upper()
     to_crs = request.args.get('to', '').upper()
     date = request.args.get('date', '')
@@ -467,31 +467,35 @@ def journey():
     if from_crs == to_crs:
         return jsonify({'status': 'error', 'message': 'Origin and destination must be different.'}), 400
 
-    # Build TransportAPI journey planner URL
     from_station = ROUTE_STATIONS[from_crs]
     to_station = ROUTE_STATIONS[to_crs]
 
+    # Build datetime for the request
+    if date and time_val:
+        dt_str = f"{date}T{time_val}:00+00:00"
+    else:
+        dt_str = None
+
     params = {
-        'from': f"crs:{from_crs}",
-        'to': f"crs:{to_crs}",
+        'calling_at': to_crs,
+        'live': 'true',
+        'limit': '10',
+        'station_detail': 'destination,calling_at',
+        'type': 'departure',
         'app_id': TRANSPORT_API_ID,
         'app_key': TRANSPORT_API_KEY,
     }
-    if date:
-        params['date'] = date
-    if time_val:
-        params['time'] = time_val
+    if dt_str:
+        params['datetime'] = dt_str
 
     try:
-        url = "https://transportapi.com/v3/uk/public_journey.json"
-        print(f"📍 Journey planner: {from_crs} → {to_crs} on {date} at {time_val}")
-        print(f"   URL: {url}?{requests.compat.urlencode(params)}")
+        url = f"https://transportapi.com/v3/uk/train/station_timetables/crs:{from_crs}.json"
+        print(f"📍 Journey: {from_crs} → {to_crs} via station_timetables")
         response = requests.get(url, params=params, timeout=15)
-        print(f"   Response: {response.status_code}")
 
         if response.status_code == 200:
-            journey_data = response.json()
-            routes = journey_data.get('routes', [])
+            data = response.json()
+            departures = data.get('departures', {}).get('all', [])
 
             # Get JAX prediction for the travel date
             jax_prediction = None
@@ -524,25 +528,71 @@ def journey():
                 except:
                     pass
 
-            # Parse routes into clean format
+            # Parse departures into journey cards
             journeys = []
-            for route in routes:
-                legs = []
-                for part in route.get('route_parts', []):
-                    legs.append({
-                        'mode': part.get('mode', 'train'),
-                        'from': part.get('from_point_name', ''),
-                        'to': part.get('to_point_name', ''),
-                        'destination': part.get('destination', ''),
-                        'departure': part.get('departure_time', ''),
-                        'arrival': part.get('arrival_time', ''),
-                        'duration': part.get('duration', ''),
-                    })
+            for dep in departures:
+                departure_time = dep.get('aimed_departure_time', '')
+                expected_dep = dep.get('expected_departure_time', departure_time)
+                dest_name = dep.get('destination_name', '')
+                operator = dep.get('operator_name', dep.get('operator', ''))
+                platform = dep.get('platform', '-')
+                status = dep.get('status', '')
+                train_uid = dep.get('train_uid', '')
+                service_url = dep.get('service_timetable', {}).get('id', '')
+
+                # Try to get arrival time at destination from calling_at detail
+                arrival_time = ''
+                calling_at_detail = dep.get('calling_at_detail', {})
+                if calling_at_detail:
+                    arrival_time = calling_at_detail.get('aimed_arrival_time', '')
+                    if not arrival_time:
+                        arrival_time = calling_at_detail.get('aimed_departure_time', '')
+
+                # Calculate duration if we have both times
+                duration = ''
+                if departure_time and arrival_time:
+                    try:
+                        from datetime import timedelta
+                        dep_parts = departure_time.split(':')
+                        arr_parts = arrival_time.split(':')
+                        dep_mins = int(dep_parts[0]) * 60 + int(dep_parts[1])
+                        arr_mins = int(arr_parts[0]) * 60 + int(arr_parts[1])
+                        if arr_mins < dep_mins:
+                            arr_mins += 24 * 60
+                        diff = arr_mins - dep_mins
+                        hours = diff // 60
+                        mins = diff % 60
+                        if hours > 0:
+                            duration = f"{hours}h {mins:02d}m"
+                        else:
+                            duration = f"{mins}m"
+                    except:
+                        pass
+
+                is_delayed = status in ['LATE', 'CANCELLED']
+
                 journeys.append({
-                    'duration': route.get('duration', ''),
-                    'departure': route.get('departure_time', ''),
-                    'arrival': route.get('arrival_time', ''),
-                    'legs': legs
+                    'departure': departure_time,
+                    'expected_departure': expected_dep,
+                    'arrival': arrival_time,
+                    'duration': duration,
+                    'destination': dest_name,
+                    'operator': operator,
+                    'platform': platform,
+                    'status': status,
+                    'train_uid': train_uid,
+                    'is_delayed': is_delayed,
+                    'legs': [{
+                        'mode': 'train',
+                        'from': from_station['name'],
+                        'to': to_station['name'],
+                        'destination': dest_name,
+                        'departure': departure_time,
+                        'arrival': arrival_time,
+                        'duration': duration,
+                        'operator': operator,
+                        'platform': platform,
+                    }]
                 })
 
             return jsonify({
@@ -553,7 +603,7 @@ def journey():
                 'time': time_val,
                 'journeys': journeys,
                 'jax_prediction': jax_prediction,
-                'source': journey_data.get('source', 'TransportAPI')
+                'source': 'TransportAPI Station Timetables'
             })
         else:
             error_body = ''
@@ -561,7 +611,6 @@ def journey():
                 error_body = response.text[:300]
             except:
                 pass
-            print(f"   TransportAPI error: {response.status_code} - {error_body}")
             return jsonify({'status': 'error', 'message': f'TransportAPI returned {response.status_code}: {error_body}'}), 500
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
