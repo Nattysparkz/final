@@ -1,768 +1,423 @@
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ['JAX_PLATFORMS'] = 'cpu'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrainJAX — Manchester to Euston</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#0a0e17; --surface:#111827; --surface-2:#1a2236; --border:#1e293b; --text:#e2e8f0; --text-dim:#64748b; --accent:#3b82f6; --accent-glow:rgba(59,130,246,0.15); --green:#22c55e; --yellow:#eab308; --orange:#f97316; --red:#ef4444; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+        body::before { content:''; position:fixed; top:0;left:0;right:0;bottom:0; background:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+        .container { max-width:1100px; margin:0 auto; padding:32px 24px; position:relative; z-index:1; }
+        .header { text-align:center; margin-bottom:36px; }
+        .header-badge { display:inline-flex; align-items:center; gap:8px; background:var(--accent-glow); border:1px solid rgba(59,130,246,0.2); padding:6px 16px; border-radius:100px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--accent); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:16px; }
+        .header-badge .pulse { width:8px;height:8px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,0.4)} 50%{opacity:0.8;box-shadow:0 0 0 6px rgba(34,197,94,0)} }
+        h1 { font-size:38px; font-weight:700; letter-spacing:-1px; background:linear-gradient(135deg,#fff 0%,#94a3b8 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:6px; }
+        .subtitle { color:var(--text-dim); font-size:15px; }
+        .tabs { display:flex; gap:4px; margin-bottom:28px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:4px; }
+        .tab { flex:1; padding:12px; text-align:center; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.3s; color:var(--text-dim); }
+        .tab.active { background:var(--accent); color:white; }
+        .tab:hover:not(.active) { background:var(--surface-2); color:var(--text); }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; animation:fadeUp 0.4s ease; }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:28px; margin-bottom:24px; }
+        .card h2 { font-size:20px; font-weight:700; margin-bottom:6px; }
+        .card .desc { color:var(--text-dim); font-size:13px; margin-bottom:20px; }
+        /* Form elements */
+        label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); display:block; margin-bottom:6px; }
+        select, input[type="date"], input[type="time"], input[type="text"] { width:100%; padding:10px 14px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; outline:none; appearance:none; }
+        select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; }
+        select:focus, input:focus { border-color:var(--accent); }
+        input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator { filter:invert(1); }
+        .btn { padding:10px 24px; background:var(--accent); color:white; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.3s; white-space:nowrap; }
+        .btn:hover { background:#2563eb; transform:translateY(-1px); box-shadow:0 4px 16px rgba(59,130,246,0.3); }
+        .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        /* Grid layouts */
+        .form-row { display:flex; gap:14px; align-items:end; margin-bottom:20px; flex-wrap:wrap; }
+        .form-row .field { flex:1; min-width:140px; }
+        /* Departure board */
+        .board-controls { display:flex; gap:12px; align-items:end; margin-bottom:20px; }
+        .board-controls input { width:100px; font-family:'JetBrains Mono',monospace; font-size:16px; text-transform:uppercase; }
+        table { width:100%; border-collapse:collapse; }
+        th { padding:10px 14px; text-align:left; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); border-bottom:1px solid var(--border); }
+        td { padding:12px 14px; font-size:14px; border-bottom:1px solid rgba(30,41,59,0.5); }
+        tr:hover td { background:rgba(59,130,246,0.03); }
+        .late { color:var(--red); font-weight:600; }
+        .ontime { color:var(--green); font-weight:600; }
+        .cancelled { color:var(--red); font-weight:700; }
+        /* Journey results */
+        .journey-card { background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:12px; }
+        .journey-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+        .journey-time { font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; }
+        .journey-duration { font-size:13px; color:var(--text-dim); background:var(--surface); padding:4px 12px; border-radius:6px; }
+        .journey-arrow { color:var(--accent); margin:0 8px; }
+        .journey-legs { border-top:1px solid var(--border); padding-top:12px; }
+        .leg { display:flex; align-items:center; gap:12px; padding:8px 0; font-size:13px; }
+        .leg-icon { width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+        .leg-icon.train { background:rgba(59,130,246,0.15); color:var(--accent); }
+        .leg-icon.foot { background:rgba(34,197,94,0.15); color:var(--green); }
+        .leg-details { flex:1; }
+        .leg-details .leg-route { font-weight:600; }
+        .leg-details .leg-time { color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:12px; }
+        /* JAX banner in journey results */
+        .jax-banner { display:flex; align-items:center; gap:16px; padding:16px; border-radius:10px; margin-bottom:16px; }
+        .jax-badge { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:white; flex-shrink:0; }
+        .jax-info h4 { font-size:15px; margin-bottom:2px; }
+        .jax-info p { font-size:12px; opacity:0.8; }
+        /* Confidence planner */
+        .confidence-banner { display:flex; align-items:center; gap:18px; padding:20px; border-radius:12px; margin-bottom:16px; }
+        .confidence-score { width:72px;height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:white; flex-shrink:0; }
+        .confidence-details h3 { font-size:17px; margin-bottom:4px; }
+        .confidence-details p { font-size:13px; opacity:0.85; line-height:1.5; }
+        .result { display:none; border-top:1px solid var(--border); padding-top:20px; }
+        .result.visible { display:block; animation:fadeUp 0.4s ease; }
+        .result-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+        .stat-card { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; }
+        .stat-value { font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; margin-bottom:4px; }
+        .stat-label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; }
+        /* Forecast */
+        .jax-status { display:flex; gap:16px; margin-bottom:20px; }
+        .jax-status .stat-card { flex:1; }
+        .forecast-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; }
+        .forecast-day { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center; transition:all 0.3s; cursor:pointer; }
+        .forecast-day:hover { border-color:var(--accent); transform:translateY(-2px); }
+        .forecast-date { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); margin-bottom:4px; }
+        .forecast-mins { font-size:20px; font-weight:700; margin-bottom:2px; }
+        .forecast-stress { font-size:10px; font-family:'JetBrains Mono',monospace; }
+        .stress-bar { height:3px; border-radius:2px; margin-top:6px; background:var(--border); overflow:hidden; }
+        .stress-bar-fill { height:100%; border-radius:2px; transition:width 0.6s ease; }
+        /* Utils */
+        .footer { text-align:center; padding:32px 0 16px; color:var(--text-dim); font-size:11px; }
+        .footer a { color:var(--accent); text-decoration:none; }
+        .loading-spinner { display:inline-block; width:14px;height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin-right:6px; vertical-align:middle; }
+        .no-results { text-align:center; padding:32px; color:var(--text-dim); }
+        .swap-btn { background:none; border:1px solid var(--border); border-radius:8px; padding:8px; cursor:pointer; color:var(--text-dim); transition:all 0.3s; display:flex; align-items:center; }
+        .swap-btn:hover { border-color:var(--accent); color:var(--accent); }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @media(max-width:768px) { .form-row,.board-controls{flex-direction:column} .result-stats,.jax-status{grid-template-columns:1fr} h1{font-size:26px} .tabs{flex-wrap:wrap} .forecast-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))} }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="header-badge"><span class="pulse"></span> JAX Neural Network · Live</div>
+        <h1>Manchester → Euston</h1>
+        <p class="subtitle">AI-powered delay prediction · Journey planner · Live departures</p>
+    </div>
 
-from flask import Flask, jsonify, render_template, request
-from flask_cors import CORS
-import pandas as pd
-import numpy as np
-import math
-import time
-import threading
-from datetime import datetime
-import requests
-import urllib3
-from sklearn.preprocessing import MinMaxScaler
-import psycopg2
-import psycopg2.extras
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'planner')">🗓 Journey Planner</div>
+        <div class="tab" onclick="switchTab(this,'board')">🚆 Departure Board</div>
+        <div class="tab" onclick="switchTab(this,'confidence')">🧠 AI Confidence</div>
+        <div class="tab" onclick="switchTab(this,'forecast')">📈 30-Day Forecast</div>
+    </div>
 
-import jax
-import jax.numpy as jnp
-from jax import random
-import flax.linen as nn
-import optax
+    <!-- TAB 1: Journey Planner (TransportAPI) -->
+    <div class="tab-content active" id="tab-planner">
+        <div class="card">
+            <h2>🗓 Journey Planner</h2>
+            <p class="desc">Plan your train journey between Manchester and Euston. Powered by TransportAPI with JAX delay predictions.</p>
+            <div class="form-row">
+                <div class="field">
+                    <label>From</label>
+                    <select id="jpFrom">
+                        <option value="MAN">Manchester Piccadilly</option>
+                        <option value="SPT">Stockport</option>
+                        <option value="MAC">Macclesfield</option>
+                        <option value="SOT">Stoke-on-Trent</option>
+                        <option value="CRE">Crewe</option>
+                        <option value="RUG">Rugby</option>
+                        <option value="MKC">Milton Keynes Central</option>
+                        <option value="EUS">London Euston</option>
+                    </select>
+                </div>
+                <button class="swap-btn" onclick="swapStations()" title="Swap">⇄</button>
+                <div class="field">
+                    <label>To</label>
+                    <select id="jpTo">
+                        <option value="MAN">Manchester Piccadilly</option>
+                        <option value="SPT">Stockport</option>
+                        <option value="MAC">Macclesfield</option>
+                        <option value="SOT">Stoke-on-Trent</option>
+                        <option value="CRE">Crewe</option>
+                        <option value="RUG">Rugby</option>
+                        <option value="MKC">Milton Keynes Central</option>
+                        <option value="EUS" selected>London Euston</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Date</label>
+                    <input type="date" id="jpDate">
+                </div>
+                <div class="field">
+                    <label>Time</label>
+                    <input type="time" id="jpTime">
+                </div>
+                <button class="btn" id="jpBtn" onclick="planTrip()">Find Trains</button>
+            </div>
+            <div id="jpResults"></div>
+        </div>
+    </div>
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    <!-- TAB 2: Departure Board -->
+    <div class="tab-content" id="tab-board">
+        <div class="card">
+            <h2>🚆 Live Departure Board</h2>
+            <p class="desc">Enter any UK station CRS code to view live departures.</p>
+            <div class="board-controls">
+                <div><label>Station CRS</label><input type="text" id="crsInput" value="MAN" maxlength="3"></div>
+                <button class="btn" onclick="getBoard()">Load Board</button>
+            </div>
+            <table id="boardTable">
+                <thead><tr><th>Time</th><th>Destination</th><th>Platform</th><th>Status</th><th>Operator</th></tr></thead>
+                <tbody><tr><td colspan="5" style="color:var(--text-dim)">Enter a station code and click Load Board...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
 
-app = Flask(__name__, template_folder='templates')
-CORS(app)
+    <!-- TAB 3: AI Confidence -->
+    <div class="tab-content" id="tab-confidence">
+        <div class="card">
+            <h2>🧠 AI Delay Confidence</h2>
+            <p class="desc">Check the JAX model's delay prediction and confidence score for any date.</p>
+            <div class="form-row">
+                <div class="field"><label>Travel Date</label><input type="date" id="travelDate"></div>
+                <button class="btn" onclick="checkConfidence()">Check Forecast</button>
+            </div>
+            <div class="result" id="result">
+                <div class="confidence-banner" id="confidenceBanner">
+                    <div class="confidence-score" id="confidenceScore">--</div>
+                    <div class="confidence-details">
+                        <h3 id="confidenceTitle">Checking...</h3>
+                        <p id="confidenceText">Analysing route conditions...</p>
+                    </div>
+                </div>
+                <div class="result-stats">
+                    <div class="stat-card"><div class="stat-value" id="statMins">--</div><div class="stat-label">Predicted Delay (mins)</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statStress">--</div><div class="stat-label">Stress Coefficient</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statRmse">--</div><div class="stat-label">Model RMSE (±mins)</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-# --- CONFIG ---
-API_KEY = os.environ.get("RAIL_API_KEY", "EhPYIKPzBrWdoIqeA6u1hGc54eJSCcZxiGGgGqfGSwkwuGVQ")
-DB_URL = os.environ.get("DATABASE_URL")
-REST_BASE_URL = "https://api1.raildata.org.uk/1010-live-departure-board---staff-version1_0/LDBSVWS/api/20220120"
-MANCHESTER_LINE = ['MAN', 'SPT', 'MAC', 'SOT', 'CRE', 'RUG', 'MKC', 'EUS']
+    <!-- TAB 4: 30-Day Forecast -->
+    <div class="tab-content" id="tab-forecast">
+        <div class="card">
+            <h2>📈 30-Day JAX Forecast</h2>
+            <p class="desc">Predicted daily delay and route stress. Click any day to check confidence.</p>
+            <div class="jax-status">
+                <div class="stat-card"><div class="stat-value" id="jaxRmse">--</div><div class="stat-label">Model RMSE</div></div>
+                <div class="stat-card"><div class="stat-value" id="jaxDays">--</div><div class="stat-label">Training Days</div></div>
+                <div class="stat-card"><div class="stat-value" id="jaxUpdated">--</div><div class="stat-label">Last Updated</div></div>
+            </div>
+            <div class="forecast-grid" id="forecastGrid"><div class="no-results"><span class="loading-spinner"></span> Loading forecast data...</div></div>
+        </div>
+    </div>
 
-# --- JAX MODEL ---
-class JaxRouteModel(nn.Module):
-    @nn.compact
-    def __call__(self, x):
-        x = x.reshape((x.shape[0], -1))
-        x = nn.Dense(64)(x)
-        x = nn.relu(x)
-        x = nn.Dense(32)(x)
-        x = nn.relu(x)
-        x = nn.Dense(1)(x)
-        return x
+    <div class="footer">
+        TrainJAX · <a href="#">JAX/Flax Neural Network</a> · Manchester to Euston
+        <br>Journey planning by TransportAPI · Predictions from PostgreSQL · Live data from Network Rail
+    </div>
+</div>
 
-# --- DATABASE HELPERS ---
-def get_db():
-    return psycopg2.connect(DB_URL)
-
-def init_db():
-    """Create prediction and live tables if they don't exist."""
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS rail_events (
-                    id SERIAL PRIMARY KEY,
-                    event_datetime TIMESTAMP,
-                    pfpi_minutes DOUBLE PRECISION,
-                    non_pfpi_minutes DOUBLE PRECISION,
-                    source_file TEXT
-                );
-                CREATE INDEX IF NOT EXISTS idx_event_datetime ON rail_events(event_datetime);
-                CREATE TABLE IF NOT EXISTS jax_predictions (
-                    id SERIAL PRIMARY KEY,
-                    forecast_date DATE,
-                    predicted_minutes DOUBLE PRECISION,
-                    stress_coefficient DOUBLE PRECISION,
-                    data_type TEXT,
-                    rmse DOUBLE PRECISION,
-                    updated_at TIMESTAMP DEFAULT NOW()
-                );
-                CREATE TABLE IF NOT EXISTS live_snapshot (
-                    id SERIAL PRIMARY KEY,
-                    station TEXT,
-                    delay_minutes DOUBLE PRECISION,
-                    status TEXT,
-                    total_delayed_trains INTEGER,
-                    total_delay_minutes DOUBLE PRECISION,
-                    updated_at TIMESTAMP DEFAULT NOW()
-                );
-            """)
-        conn.commit()
-        conn.close()
-        print("✅ Database tables ready.")
-    except Exception as e:
-        print(f"⚠️ Database init error: {e}")
-
-# --- LIVE API SCANNER ---
-def scan_live_departures():
-    """Scan all stations on the Manchester-Euston route and return results."""
-    headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
-    results = []
-    total_delay = 0
-    total_delayed = 0
-
-    for station in MANCHESTER_LINE:
-        current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
-        url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{station}/{current_time}?numRows=10&timeWindow=120"
-
-        station_delay = 0
-        station_status = "⚠️"
-
-        try:
-            response = requests.get(url, headers=headers, timeout=15, verify=False)
-            if response.status_code == 200:
-                data = response.json()
-                services = data.get('trainServices', [])
-
-                if not services:
-                    results.append({'station': station, 'delay': 0, 'status': '⚪ None'})
-                    continue
-
-                for train in services[:6]:
-                    std = train.get('std', 'N/A')
-                    etd = train.get('etd', 'N/A')
-                    atd = train.get('atd', 'N/A')
-                    is_cancelled = train.get('isCancelled', False)
-                    flag = atd if atd != 'N/A' else etd
-                    flag_lower = str(flag).lower().strip()
-
-                    if is_cancelled or flag_lower == 'cancelled':
-                        station_delay += 60
-                        total_delayed += 1
-                    elif flag_lower == 'delayed':
-                        total_delayed += 1
-                    elif flag_lower not in ['on time', 'n/a', 'no report'] and std != 'N/A':
-                        try:
-                            try:
-                                dt_std = datetime.fromisoformat(std)
-                                dt_flag = datetime.fromisoformat(flag)
-                            except ValueError:
-                                dt_std = datetime.strptime(str(std).strip()[:5], '%H:%M')
-                                dt_flag = datetime.strptime(str(flag).strip()[:5], '%H:%M')
-                            delay = (dt_flag - dt_std).total_seconds() / 60
-                            if delay < -720: delay += 1440
-                            elif delay > 720: delay -= 1440
-                            if delay > 0:
-                                station_delay += delay
-                                total_delayed += 1
-                        except:
-                            pass
-
-                total_delay += station_delay
-                if station_delay > 0:
-                    station_status = f"🔴 {int(station_delay)}m"
-                else:
-                    station_status = "🟢 OK"
-            else:
-                station_status = f"⚠️ {response.status_code}"
-        except Exception as e:
-            station_status = "⚠️"
-
-        results.append({'station': station, 'delay': station_delay, 'status': station_status})
-        time.sleep(0.5)
-
-    # Save to database
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM live_snapshot;")
-            for r in results:
-                cur.execute(
-                    "INSERT INTO live_snapshot (station, delay_minutes, status, total_delayed_trains, total_delay_minutes) VALUES (%s,%s,%s,%s,%s)",
-                    (r['station'], float(r['delay']), r['status'], int(total_delayed), float(total_delay))
-                )
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        print(f"⚠️ Could not save live snapshot: {e}")
-
-    return results, total_delayed, total_delay
-
-# --- JAX TRAINING ---
-def run_jax_training():
-    """Train the JAX model and save predictions to database."""
-    print("\n🧠 --- STARTING JAX TRAINING ---")
-
-    try:
-        conn = get_db()
-        df = pd.read_sql("""
-            SELECT event_datetime as "EVENT_DATETIME",
-                   pfpi_minutes as "PFPI_MINUTES",
-                   non_pfpi_minutes as "NON_PFPI_MINUTES"
-            FROM rail_events ORDER BY event_datetime
-        """, conn)
-        conn.close()
-    except Exception as e:
-        print(f"❌ Database error: {e}")
-        return
-
-    if df.empty:
-        print("❌ No data in database.")
-        return
-
-    print(f"✅ Loaded {len(df)} rows.")
-
-    df['EVENT_DATETIME'] = pd.to_datetime(df['EVENT_DATETIME'], errors='coerce')
-    df = df.dropna(subset=['EVENT_DATETIME']).sort_values('EVENT_DATETIME')
-
-    if 'NON_PFPI_MINUTES' not in df.columns:
-        df['NON_PFPI_MINUTES'] = 0
-    if 'PFPI_MINUTES' not in df.columns:
-        df['PFPI_MINUTES'] = 0
-
-    daily = df.groupby(df['EVENT_DATETIME'].dt.date)[['PFPI_MINUTES', 'NON_PFPI_MINUTES']].sum().reset_index()
-    daily['TOTAL_COMBINED_MINUTES'] = daily['PFPI_MINUTES'] + daily['NON_PFPI_MINUTES']
-    daily['EVENT_DATETIME'] = pd.to_datetime(daily['EVENT_DATETIME'])
-
-    total_days = len(daily)
-    if total_days < 15:
-        print(f"❌ Not enough data ({total_days} days).")
-        return
-
-    dataset = daily[['TOTAL_COMBINED_MINUTES']].values
-    training_data_len = math.ceil(total_days * 0.8)
-
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    scaled_data = scaler.fit_transform(dataset)
-
-    window_size = 14
-    train_data = scaled_data[:training_data_len]
-
-    x_train, y_train = [], []
-    for i in range(window_size, len(train_data)):
-        x_train.append(train_data[i - window_size:i, 0])
-        y_train.append(train_data[i, 0])
-
-    x_train_jnp = jnp.array(x_train).reshape(-1, window_size, 1)
-    y_train_jnp = jnp.array(y_train).reshape(-1, 1)
-
-    model = JaxRouteModel()
-    key = random.PRNGKey(42)
-    variables = model.init(key, jnp.ones((1, window_size, 1)))
-    params = variables['params']
-    optimizer = optax.adam(learning_rate=0.001)
-    opt_state = optimizer.init(params)
-
-    @jax.jit
-    def train_step(params, opt_state, x, y):
-        def loss_fn(p):
-            preds = model.apply({'params': p}, x)
-            return jnp.mean((preds - y) ** 2)
-        loss, grads = jax.value_and_grad(loss_fn)(params)
-        updates, opt_state = optimizer.update(grads, opt_state)
-        new_params = optax.apply_updates(params, updates)
-        return new_params, opt_state, loss
-
-    for epoch in range(51):
-        params, opt_state, loss = train_step(params, opt_state, x_train_jnp, y_train_jnp)
-        if epoch % 10 == 0:
-            loss.block_until_ready()
-            print(f"  Epoch {epoch:02d} | Loss: {loss:.6f}")
-
-    # Test
-    test_data = scaled_data[training_data_len - window_size:]
-    x_test = [test_data[i - window_size:i, 0] for i in range(window_size, len(test_data))]
-    x_test_jnp = jnp.array(x_test).reshape(-1, window_size, 1)
-    y_test = dataset[training_data_len:]
-    preds_scaled = model.apply({'params': params}, x_test_jnp)
-    test_predictions = scaler.inverse_transform(np.array(preds_scaled))
-    rmse = np.sqrt(np.mean((test_predictions - y_test) ** 2))
-    print(f"  RMSE: {rmse:.2f}")
-
-    # Future forecast
-    future_days = 30
-    future_predictions = []
-    current_window = scaled_data[-window_size:]
-    for _ in range(future_days):
-        in_win = jnp.reshape(current_window, (1, window_size, 1))
-        next_pred = model.apply({'params': params}, in_win)
-        future_predictions.append(next_pred[0, 0])
-        current_window = jnp.append(current_window[1:], next_pred, axis=0)
-    future_predictions = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
-
-    last_date = daily['EVENT_DATETIME'].iloc[-1]
-    future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=future_days)
-
-    # Build master table
-    historical = daily[['EVENT_DATETIME', 'TOTAL_COMBINED_MINUTES']].copy()
-    historical.rename(columns={'EVENT_DATETIME': 'Date', 'TOTAL_COMBINED_MINUTES': 'Minutes'}, inplace=True)
-    historical['Data_Type'] = 'Actual'
-
-    future = pd.DataFrame({'Date': future_dates, 'Minutes': future_predictions.flatten()})
-    future['Data_Type'] = 'Forecast'
-
-    master = pd.concat([historical, future], ignore_index=True)
-    master['Stress_Coefficient'] = (master['Minutes'] / historical['Minutes'].max()).clip(upper=1.0)
-
-    # Save to database
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM jax_predictions;")
-            for _, row in master.iterrows():
-                cur.execute(
-                    "INSERT INTO jax_predictions (forecast_date, predicted_minutes, stress_coefficient, data_type, rmse) VALUES (%s,%s,%s,%s,%s)",
-                    (row['Date'], float(row['Minutes']), float(row['Stress_Coefficient']), row['Data_Type'], float(rmse))
-                )
-        conn.commit()
-        conn.close()
-        print("✅ Predictions saved to database!")
-    except Exception as e:
-        print(f"⚠️ Could not save predictions: {e}")
-
-# --- DATA SCRAPER (HARVESTS LIVE DATA INTO DATABASE) ---
-def scrape_and_store():
-    """Scan all route stations and store delay data in rail_events table for future training."""
-    headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
-    rows_saved = 0
-
-    for station in MANCHESTER_LINE:
-        current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
-        url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{station}/{current_time}?numRows=15&timeWindow=120"
-
-        try:
-            response = requests.get(url, headers=headers, timeout=15, verify=False)
-            if response.status_code == 200:
-                data = response.json()
-                services = data.get('trainServices', [])
-                station_delay = 0
-
-                for train in services:
-                    std = train.get('std', 'N/A')
-                    etd = train.get('etd', 'N/A')
-                    atd = train.get('atd', 'N/A')
-                    is_cancelled = train.get('isCancelled', False)
-                    flag = atd if atd != 'N/A' else etd
-                    flag_lower = str(flag).lower().strip()
-
-                    if is_cancelled or flag_lower == 'cancelled':
-                        station_delay += 60
-                    elif flag_lower not in ['on time', 'n/a', 'no report', 'delayed'] and std != 'N/A':
-                        try:
-                            try:
-                                dt_std = datetime.fromisoformat(std)
-                                dt_flag = datetime.fromisoformat(flag)
-                            except ValueError:
-                                dt_std = datetime.strptime(str(std).strip()[:5], '%H:%M')
-                                dt_flag = datetime.strptime(str(flag).strip()[:5], '%H:%M')
-                            delay = (dt_flag - dt_std).total_seconds() / 60
-                            if delay < -720: delay += 1440
-                            elif delay > 720: delay -= 1440
-                            if delay > 0:
-                                station_delay += delay
-                        except:
-                            pass
-
-                # Store in database
-                try:
-                    conn = get_db()
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            "INSERT INTO rail_events (event_datetime, pfpi_minutes, non_pfpi_minutes, source_file) VALUES (%s, %s, %s, %s)",
-                            (datetime.now(), float(station_delay), 0.0, f"scraper_{station}")
-                        )
-                    conn.commit()
-                    conn.close()
-                    rows_saved += 1
-                except Exception as e:
-                    print(f"⚠️ Scraper DB error for {station}: {e}")
-        except:
-            pass
-
-        time.sleep(0.5)
-
-    if rows_saved > 0:
-        print(f"📥 Scraper: Saved {rows_saved} station readings to database.")
-    return rows_saved
-
-# --- BACKGROUND TASKS ---
-def background_tasks():
-    """Run scraper, live scan, and JAX training on a schedule."""
-    time.sleep(5)  # Wait for app to start
-
-    # Initial run
-    print("📡 Scanning live departures...")
-    scan_live_departures()
-    print("📥 Running initial data scrape...")
-    scrape_and_store()
-    run_jax_training()
-
-    # Schedule:
-    # - Scrape every 60 seconds (new training data)
-    # - Update live snapshot every 5 minutes
-    # - Retrain JAX every 6 hours
-    last_live = time.time()
-    last_train = time.time()
-
-    while True:
-        time.sleep(60)  # Every 60 seconds
-        try:
-            # Always scrape
-            scrape_and_store()
-
-            # Live snapshot every 5 minutes
-            if time.time() - last_live > 300:
-                print("📡 Refreshing live departures...")
-                scan_live_departures()
-                last_live = time.time()
-
-            # Retrain every 6 hours
-            if time.time() - last_train > 21600:
-                print("🔄 Retraining JAX model with new data...")
-                run_jax_training()
-                last_train = time.time()
-        except Exception as e:
-            print(f"⚠️ Background task error: {e}")
-
-# ==================== ROUTES ====================
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/api/departures/<crs>')
-def departures(crs):
-    """Proxy to rail API for any station departure board."""
-    crs = crs.upper()
-    current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
-    url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{crs}/{current_time}?numRows=10&timeWindow=120"
-    headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
-
-    try:
-        response = requests.get(url, headers=headers, timeout=15, verify=False)
-        return jsonify(response.json()), response.status_code
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# --- TRANSPORTAPI JOURNEY PLANNER ---
-TRANSPORT_API_ID = os.environ.get("TRANSPORT_API_ID", "28e3461f")
-TRANSPORT_API_KEY = os.environ.get("TRANSPORT_API_KEY", "49d8c34f11b8b329e4f4c979820dca62")
-
-# Station coordinates for the Manchester-Euston route
-ROUTE_STATIONS = {
-    'MAN': {'name': 'Manchester Piccadilly', 'crs': 'MAN', 'lat': 53.4774, 'lon': -2.2309},
-    'SPT': {'name': 'Stockport', 'crs': 'SPT', 'lat': 53.4052, 'lon': -2.1634},
-    'MAC': {'name': 'Macclesfield', 'crs': 'MAC', 'lat': 53.2586, 'lon': -2.1253},
-    'SOT': {'name': 'Stoke-on-Trent', 'crs': 'SOT', 'lat': 52.9905, 'lon': -2.1814},
-    'CRE': {'name': 'Crewe', 'crs': 'CRE', 'lat': 53.0876, 'lon': -2.4317},
-    'RUG': {'name': 'Rugby', 'crs': 'RUG', 'lat': 52.3785, 'lon': -1.2502},
-    'MKC': {'name': 'Milton Keynes Central', 'crs': 'MKC', 'lat': 52.0345, 'lon': -0.7740},
-    'EUS': {'name': 'London Euston', 'crs': 'EUS', 'lat': 51.5282, 'lon': -0.1337},
+<script>
+function switchTab(el, name) {
+    document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+    document.getElementById('tab-'+name).classList.add('active');
+    el.classList.add('active');
 }
 
-@app.route('/api/stations')
-def stations():
-    """Return list of route stations."""
-    return jsonify({'status': 'ok', 'stations': [
-        {'crs': s['crs'], 'name': s['name'], 'lat': s['lat'], 'lon': s['lon']}
-        for s in ROUTE_STATIONS.values()
-    ]})
+// Set defaults
+var now = new Date();
+document.getElementById('jpDate').valueAsDate = now;
+document.getElementById('travelDate').valueAsDate = now;
+document.getElementById('jpTime').value = now.toTimeString().substring(0,5);
 
-@app.route('/api/journey')
-def journey():
-    """Plan a journey using TransportAPI station timetables with calling_at filter."""
-    from_crs = request.args.get('from', '').upper()
-    to_crs = request.args.get('to', '').upper()
-    date = request.args.get('date', '')
-    time_val = request.args.get('time', '')
+function swapStations() {
+    var f = document.getElementById('jpFrom');
+    var t = document.getElementById('jpTo');
+    var tmp = f.value;
+    f.value = t.value;
+    t.value = tmp;
+}
 
-    if from_crs not in ROUTE_STATIONS or to_crs not in ROUTE_STATIONS:
-        return jsonify({'status': 'error', 'message': 'Both stations must be on the Manchester-Euston route.'}), 400
+// ===== JOURNEY PLANNER =====
+async function planTrip() {
+    var from = document.getElementById('jpFrom').value;
+    var to = document.getElementById('jpTo').value;
+    var date = document.getElementById('jpDate').value;
+    var time = document.getElementById('jpTime').value;
+    var btn = document.getElementById('jpBtn');
+    var results = document.getElementById('jpResults');
 
-    if from_crs == to_crs:
-        return jsonify({'status': 'error', 'message': 'Origin and destination must be different.'}), 400
+    if (from === to) { results.innerHTML = '<div class="no-results">Origin and destination must be different.</div>'; return; }
 
-    from_station = ROUTE_STATIONS[from_crs]
-    to_station = ROUTE_STATIONS[to_crs]
+    btn.disabled = true;
+    btn.textContent = 'Searching...';
+    results.innerHTML = '<div class="no-results"><span class="loading-spinner"></span> Finding trains...</div>';
 
-    # Build datetime for the request
-    if date and time_val:
-        dt_str = f"{date}T{time_val}:00+00:00"
-    else:
-        dt_str = None
+    try {
+        var res = await fetch('/api/journey?from='+from+'&to='+to+'&date='+date+'&time='+time);
+        var data = await res.json();
 
-    params = {
-        'calling_at': to_crs,
-        'live': 'true',
-        'limit': '10',
-        'station_detail': 'destination,calling_at',
-        'type': 'departure',
-        'app_id': TRANSPORT_API_ID,
-        'app_key': TRANSPORT_API_KEY,
+        if (data.status === 'ok') {
+            var html = '';
+
+            // JAX prediction banner
+            if (data.jax_prediction) {
+                var jp = data.jax_prediction;
+                html += '<div class="jax-banner" style="background:'+jp.color+'15;border:1px solid '+jp.color+'30">';
+                html += '<div class="jax-badge" style="background:'+jp.color+'">'+jp.confidence+'</div>';
+                html += '<div class="jax-info"><h4 style="color:'+jp.color+'">'+jp.confidence+' Confidence for '+date+'</h4>';
+                html += '<p>JAX predicts '+jp.stress_coefficient*100+'% route stress · Model accuracy ±'+jp.rmse+' mins</p></div></div>';
+            }
+
+            if (data.journeys.length === 0) {
+                html += '<div class="no-results">No train journeys found for this route and time. Try a different time.</div>';
+            } else {
+                for (var i = 0; i < data.journeys.length; i++) {
+                    var j = data.journeys[i];
+                    html += '<div class="journey-card">';
+                    html += '<div class="journey-header">';
+                    html += '<div><span class="journey-time">'+j.departure+'</span><span class="journey-arrow">→</span><span class="journey-time">'+j.arrival+'</span></div>';
+                    html += '<div class="journey-duration">'+j.duration+'</div></div>';
+                    html += '<div class="journey-legs">';
+                    for (var k = 0; k < j.legs.length; k++) {
+                        var leg = j.legs[k];
+                        var icon = leg.mode === 'foot' ? '🚶' : '🚆';
+                        var iconClass = leg.mode === 'foot' ? 'foot' : 'train';
+                        html += '<div class="leg">';
+                        html += '<div class="leg-icon '+iconClass+'">'+icon+'</div>';
+                        html += '<div class="leg-details">';
+                        html += '<div class="leg-route">'+leg.from+' → '+leg.to+'</div>';
+                        if (leg.destination) html += '<div class="leg-time">towards '+leg.destination+' · '+leg.departure+' - '+leg.arrival+'</div>';
+                        else html += '<div class="leg-time">'+leg.departure+' - '+leg.arrival+' · '+leg.duration+'</div>';
+                        html += '</div></div>';
+                    }
+                    html += '</div></div>';
+                }
+            }
+            html += '<div style="text-align:right;font-size:11px;color:var(--text-dim);margin-top:8px">Source: '+data.source+'</div>';
+            results.innerHTML = html;
+        } else {
+            results.innerHTML = '<div class="no-results">'+(data.message||'Could not find journeys.')+'</div>';
+        }
+    } catch(e) {
+        results.innerHTML = '<div class="no-results">Error connecting to journey planner.</div>';
     }
-    if dt_str:
-        params['datetime'] = dt_str
+    btn.disabled = false;
+    btn.textContent = 'Find Trains';
+}
 
-    try:
-        url = f"https://transportapi.com/v3/uk/train/station_timetables/crs:{from_crs}.json"
-        print(f"📍 Journey: {from_crs} → {to_crs} via station_timetables")
-        response = requests.get(url, params=params, timeout=15)
+// ===== DEPARTURE BOARD =====
+async function getBoard() {
+    var crs = document.getElementById('crsInput').value.toUpperCase();
+    var tbody = document.querySelector('#boardTable tbody');
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim)"><span class="loading-spinner"></span> Loading...</td></tr>';
+    try {
+        var response = await fetch('/api/departures/'+crs);
+        if (!response.ok) throw new Error('err');
+        var data = await response.json();
+        tbody.innerHTML = '';
+        var services = data.trainServices || [];
+        if (services.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim)">No departures found.</td></tr>'; return; }
+        services.forEach(function(train) {
+            var row = document.createElement('tr');
+            var std = train.std||'N/A';
+            var destName = 'Unknown';
+            if (train.destination) {
+                if (Array.isArray(train.destination)) destName = (train.destination[0]&&train.destination[0].locationName)||'Unknown';
+                else if (train.destination.location) { var loc = Array.isArray(train.destination.location)?train.destination.location[0]:train.destination.location; destName=loc.locationName||'Unknown'; }
+                else if (train.destination.locationName) destName=train.destination.locationName;
+            }
+            var plat=train.platform||'-', etd=train.etd||'N/A', operator=train.operator||train.operatorCode||'';
+            var isCancelled=train.isCancelled||false;
+            var sc='ontime',st=etd;
+            if(isCancelled||etd.toLowerCase()==='cancelled'){sc='cancelled';st='CANCELLED';}
+            else if(etd!=='On time'&&etd!=='N/A')sc='late';
+            var dt=String(std).substring(0,5); try{dt=new Date(std).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}catch(e){}
+            row.innerHTML='<td style="font-family:JetBrains Mono,monospace;font-weight:600">'+dt+'</td><td>'+destName+'</td><td style="text-align:center">'+plat+'</td><td class="'+sc+'">'+st+'</td><td style="color:var(--text-dim)">'+operator+'</td>';
+            tbody.appendChild(row);
+        });
+    } catch(e) { tbody.innerHTML='<tr><td colspan="5" style="color:var(--red)">Error loading data.</td></tr>'; }
+}
 
-        if response.status_code == 200:
-            data = response.json()
-            departures = data.get('departures', {}).get('all', [])
+// ===== AI CONFIDENCE =====
+async function checkConfidence() {
+    var date = document.getElementById('travelDate').value;
+    if (!date) return;
+    document.getElementById('result').classList.add('visible');
+    try {
+        var res = await fetch('/api/plan/'+date);
+        var data = await res.json();
+        if (data.status==='ok') {
+            document.getElementById('confidenceBanner').style.background=data.color+'15';
+            document.getElementById('confidenceBanner').style.border='1px solid '+data.color+'30';
+            document.getElementById('confidenceScore').style.background=data.color;
+            document.getElementById('confidenceScore').textContent=data.confidence;
+            document.getElementById('confidenceTitle').textContent=data.confidence+' Confidence';
+            document.getElementById('confidenceTitle').style.color=data.color;
+            document.getElementById('confidenceText').textContent=data.recommendation;
+            document.getElementById('statMins').textContent=Math.round(data.predicted_minutes);
+            document.getElementById('statMins').style.color=data.color;
+            document.getElementById('statStress').textContent=(data.stress_coefficient*100).toFixed(1)+'%';
+            document.getElementById('statRmse').textContent='±'+data.rmse;
+        } else {
+            document.getElementById('confidenceScore').style.background='var(--text-dim)';
+            document.getElementById('confidenceScore').textContent='—';
+            document.getElementById('confidenceTitle').textContent='No Data';
+            document.getElementById('confidenceTitle').style.color='var(--text-dim)';
+            document.getElementById('confidenceText').textContent=data.message||'No prediction for this date.';
+        }
+    } catch(e) { document.getElementById('confidenceTitle').textContent='Error'; document.getElementById('confidenceText').textContent='Could not retrieve data.'; }
+}
 
-            # Get JAX prediction for the travel date
-            jax_prediction = None
-            if date:
-                try:
-                    conn = get_db()
-                    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                    cur.execute("SELECT predicted_minutes, stress_coefficient, rmse FROM jax_predictions WHERE forecast_date = %s", (date,))
-                    row = cur.fetchone()
-                    conn.close()
-                    if row:
-                        stress = float(row['stress_coefficient'])
-                        if stress < 0.2:
-                            confidence, color = 'HIGH', '#22c55e'
-                        elif stress < 0.4:
-                            confidence, color = 'GOOD', '#84cc16'
-                        elif stress < 0.6:
-                            confidence, color = 'MODERATE', '#eab308'
-                        elif stress < 0.8:
-                            confidence, color = 'LOW', '#f97316'
-                        else:
-                            confidence, color = 'POOR', '#ef4444'
-                        jax_prediction = {
-                            'predicted_minutes': round(float(row['predicted_minutes']), 1),
-                            'stress_coefficient': round(stress, 4),
-                            'rmse': round(float(row['rmse']), 2),
-                            'confidence': confidence,
-                            'color': color
-                        }
-                except:
-                    pass
+// ===== 30-DAY FORECAST =====
+async function loadForecast() {
+    try {
+        var res = await fetch('/api/predictions');
+        var data = await res.json();
+        if (data.status==='ok'&&data.predictions&&data.predictions.length>0) {
+            var all=data.predictions, forecasts=[], actuals=[];
+            for(var i=0;i<all.length;i++){if(all[i].data_type==='Forecast')forecasts.push(all[i]);else actuals.push(all[i]);}
+            if(all.length>0){
+                document.getElementById('jaxRmse').textContent='±'+all[0].rmse;
+                document.getElementById('jaxDays').textContent=actuals.length;
+                if(all[0].updated_at){var d=new Date(all[0].updated_at);document.getElementById('jaxUpdated').textContent=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});}
+            }
+            var grid=document.getElementById('forecastGrid');
+            if(forecasts.length===0){grid.innerHTML='<div class="no-results">No forecast data yet.</div>';return;}
+            var html='';
+            for(var j=0;j<forecasts.length;j++){
+                var f=forecasts[j],ds=f.forecast_date,parts=ds.split('-'),dateObj=new Date(parts[0],parts[1]-1,parts[2]);
+                var lbl=dateObj.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+                var stress=parseFloat(f.stress_coefficient),color=stressColor(stress),mins=Math.round(f.predicted_minutes),pct=Math.min(stress*100,100).toFixed(0);
+                html+='<div class="forecast-day" onclick="selectForecastDate(\''+ds+'\')">';
+                html+='<div class="forecast-date">'+lbl+'</div>';
+                html+='<div class="forecast-mins" style="color:'+color+'">'+mins+'</div>';
+                html+='<div class="forecast-stress" style="color:'+color+'">'+pct+'% stress</div>';
+                html+='<div class="stress-bar"><div class="stress-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div></div>';
+            }
+            grid.innerHTML=html;
+        }
+    } catch(e) { document.getElementById('forecastGrid').innerHTML='<div class="no-results">Could not load forecast.</div>'; }
+}
 
-            # Parse departures into journey cards
-            journeys = []
-            for dep in departures:
-                departure_time = dep.get('aimed_departure_time', '')
-                expected_dep = dep.get('expected_departure_time', departure_time)
-                dest_name = dep.get('destination_name', '')
-                operator = dep.get('operator_name', dep.get('operator', ''))
-                platform = dep.get('platform', '-')
-                status = dep.get('status', '')
-                train_uid = dep.get('train_uid', '')
-                service_url = dep.get('service_timetable', {}).get('id', '')
+function selectForecastDate(ds) {
+    document.getElementById('travelDate').value=ds;
+    switchTab(document.querySelectorAll('.tab')[2],'confidence');
+    checkConfidence();
+}
 
-                # Try to get arrival time at destination from calling_at detail
-                arrival_time = ''
-                calling_at_detail = dep.get('calling_at_detail', {})
-                if calling_at_detail:
-                    arrival_time = calling_at_detail.get('aimed_arrival_time', '')
-                    if not arrival_time:
-                        arrival_time = calling_at_detail.get('aimed_departure_time', '')
+function stressColor(s){if(s<0.2)return'#22c55e';if(s<0.4)return'#84cc16';if(s<0.6)return'#eab308';if(s<0.8)return'#f97316';return'#ef4444';}
 
-                # Calculate duration if we have both times
-                duration = ''
-                if departure_time and arrival_time:
-                    try:
-                        from datetime import timedelta
-                        dep_parts = departure_time.split(':')
-                        arr_parts = arrival_time.split(':')
-                        dep_mins = int(dep_parts[0]) * 60 + int(dep_parts[1])
-                        arr_mins = int(arr_parts[0]) * 60 + int(arr_parts[1])
-                        if arr_mins < dep_mins:
-                            arr_mins += 24 * 60
-                        diff = arr_mins - dep_mins
-                        hours = diff // 60
-                        mins = diff % 60
-                        if hours > 0:
-                            duration = f"{hours}h {mins:02d}m"
-                        else:
-                            duration = f"{mins}m"
-                    except:
-                        pass
-
-                is_delayed = status in ['LATE', 'CANCELLED']
-
-                journeys.append({
-                    'departure': departure_time,
-                    'expected_departure': expected_dep,
-                    'arrival': arrival_time,
-                    'duration': duration,
-                    'destination': dest_name,
-                    'operator': operator,
-                    'platform': platform,
-                    'status': status,
-                    'train_uid': train_uid,
-                    'is_delayed': is_delayed,
-                    'legs': [{
-                        'mode': 'train',
-                        'from': from_station['name'],
-                        'to': to_station['name'],
-                        'destination': dest_name,
-                        'departure': departure_time,
-                        'arrival': arrival_time,
-                        'duration': duration,
-                        'operator': operator,
-                        'platform': platform,
-                    }]
-                })
-
-            return jsonify({
-                'status': 'ok',
-                'from': from_station,
-                'to': to_station,
-                'date': date,
-                'time': time_val,
-                'journeys': journeys,
-                'jax_prediction': jax_prediction,
-                'source': 'TransportAPI Station Timetables'
-            })
-        else:
-            error_body = ''
-            try:
-                error_body = response.text[:300]
-            except:
-                pass
-            return jsonify({'status': 'error', 'message': f'TransportAPI returned {response.status_code}: {error_body}'}), 500
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/api/station_timetable/<crs>')
-def station_timetable(crs):
-    """Get live train departures from TransportAPI for a route station."""
-    crs = crs.upper()
-    if crs not in ROUTE_STATIONS:
-        return jsonify({'status': 'error', 'message': 'Station not on route.'}), 400
-
-    params = {
-        'live': 'true',
-        'app_id': TRANSPORT_API_ID,
-        'app_key': TRANSPORT_API_KEY,
-    }
-
-    try:
-        url = f"https://transportapi.com/v3/uk/train/station_timetables/crs:{crs}.json"
-        response = requests.get(url, params=params, timeout=15)
-        if response.status_code == 200:
-            return jsonify(response.json())
-        return jsonify({'status': 'error', 'message': f'API returned {response.status_code}'}), response.status_code
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/api/predictions')
-def predictions():
-    """Return all JAX predictions from the database."""
-    try:
-        conn = get_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT forecast_date, predicted_minutes, stress_coefficient, data_type, rmse, updated_at FROM jax_predictions ORDER BY forecast_date")
-        rows = cur.fetchall()
-        conn.close()
-        return jsonify({'status': 'ok', 'predictions': [{
-            'forecast_date': str(r['forecast_date']),
-            'predicted_minutes': round(float(r['predicted_minutes']), 2),
-            'stress_coefficient': round(float(r['stress_coefficient']), 4),
-            'data_type': r['data_type'],
-            'rmse': round(float(r['rmse']), 2),
-            'updated_at': str(r['updated_at']) if r['updated_at'] else None
-        } for r in rows]})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/api/live')
-def live():
-    """Return live station snapshot from the database."""
-    try:
-        conn = get_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT station, delay_minutes, status, total_delayed_trains, total_delay_minutes, updated_at FROM live_snapshot ORDER BY id")
-        rows = cur.fetchall()
-        conn.close()
-
-        total_delayed = int(rows[0]['total_delayed_trains']) if rows else 0
-        total_delay = float(rows[0]['total_delay_minutes']) if rows else 0
-        updated = str(rows[0]['updated_at']) if rows else None
-
-        return jsonify({
-            'status': 'ok',
-            'stations': [{'station': r['station'], 'delay': float(r['delay_minutes']), 'status': r['status']} for r in rows],
-            'total_delayed_trains': total_delayed,
-            'total_delay_minutes': total_delay,
-            'updated': updated
-        })
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/api/plan/<date>')
-def plan(date):
-    """Return prediction and confidence for a specific date."""
-    try:
-        conn = get_db()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT forecast_date, predicted_minutes, stress_coefficient, data_type, rmse FROM jax_predictions WHERE forecast_date = %s", (date,))
-        row = cur.fetchone()
-        conn.close()
-
-        if not row:
-            return jsonify({'status': 'error', 'message': 'No prediction for this date. The model forecasts 30 days ahead.'}), 404
-
-        stress = float(row['stress_coefficient'])
-        minutes = float(row['predicted_minutes'])
-
-        if stress < 0.2:
-            confidence, color = 'HIGH', '#22c55e'
-            rec = 'Excellent day to travel. Minimal delays expected.'
-        elif stress < 0.4:
-            confidence, color = 'GOOD', '#84cc16'
-            rec = 'Good conditions. Minor delays possible.'
-        elif stress < 0.6:
-            confidence, color = 'MODERATE', '#eab308'
-            rec = 'Some delays expected. Allow 15-20 extra minutes.'
-        elif stress < 0.8:
-            confidence, color = 'LOW', '#f97316'
-            rec = 'Significant delays likely. Consider travelling earlier or later.'
-        else:
-            confidence, color = 'POOR', '#ef4444'
-            rec = 'Severe disruption expected. Consider alternative transport.'
-
-        return jsonify({
-            'status': 'ok',
-            'date': str(row['forecast_date']),
-            'predicted_minutes': round(minutes, 1),
-            'stress_coefficient': round(stress, 4),
-            'data_type': row['data_type'],
-            'rmse': round(float(row['rmse']), 2),
-            'confidence': confidence,
-            'recommendation': rec,
-            'color': color
-        })
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/health')
-def health():
-    return jsonify({'status': 'ok', 'time': datetime.now().isoformat()})
-
-@app.route('/api/stats')
-def stats():
-    """Return database stats and scraper info."""
-    try:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM rail_events")
-        total_events = cur.fetchone()[0]
-        cur.execute("SELECT MIN(event_datetime), MAX(event_datetime) FROM rail_events")
-        date_range = cur.fetchone()
-        cur.execute("SELECT COUNT(*) FROM rail_events WHERE source_file LIKE 'scraper_%'")
-        scraped_rows = cur.fetchone()[0]
-        cur.execute("SELECT COUNT(*) FROM jax_predictions WHERE data_type = 'Forecast'")
-        forecast_days = cur.fetchone()[0]
-        conn.close()
-        return jsonify({
-            'status': 'ok',
-            'total_events': total_events,
-            'scraped_events': scraped_rows,
-            'date_from': str(date_range[0]) if date_range[0] else None,
-            'date_to': str(date_range[1]) if date_range[1] else None,
-            'forecast_days': forecast_days
-        })
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-# --- START ---
-init_db()
-# Start background training/scanning thread
-t = threading.Thread(target=background_tasks, daemon=True)
-t.start()
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port, debug=False)
+loadForecast();
+</script>
+</body>
+</html>
