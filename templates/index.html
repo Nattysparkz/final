@@ -98,7 +98,16 @@
         .swap-btn:hover { border-color:var(--accent); color:var(--accent); }
         @keyframes spin { to{transform:rotate(360deg)} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-        @media(max-width:768px) { .form-row,.board-controls{flex-direction:column} .result-stats,.jax-status{grid-template-columns:1fr} h1{font-size:26px} .tabs{flex-wrap:wrap} .forecast-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))} }
+        .live-clock { font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; color:var(--accent); letter-spacing:3px; }
+        .live-date-display { font-size:12px; color:var(--text-dim); margin-top:2px; }
+        .clock-box { display:flex; align-items:center; gap:20px; padding:14px 18px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; margin-bottom:20px; }
+        .info-box { background:var(--surface-2); border-left:3px solid var(--accent); border-radius:0 8px 8px 0; padding:12px 16px; margin-bottom:16px; font-size:13px; color:var(--text-dim); line-height:1.65; }
+        .info-box strong { color:var(--text); }
+        .metric-hint { font-size:11px; color:var(--text-dim); margin-top:4px; line-height:1.4; }
+        .stress-legend { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+        .stress-legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-dim); }
+        .stress-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        @media(max-width:768px) { .form-row,.board-controls{flex-direction:column} .result-stats,.jax-status{grid-template-columns:1fr} h1{font-size:26px} .tabs{flex-wrap:wrap} .forecast-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))} .clock-box{flex-direction:column;gap:8px;text-align:center} }
     </style>
 </head>
 <body>
@@ -120,7 +129,17 @@
     <div class="tab-content active" id="tab-planner">
         <div class="card">
             <h2>🗓 Journey Planner</h2>
-            <p class="desc">Plan your train journey between Manchester and Euston. Powered by TransportAPI with JAX delay predictions.</p>
+            <p class="desc">Plan a train journey between any two stations on the Manchester–London Euston route. Select your origin, destination, date and departure time, then click <strong style="color:var(--text)">Find Trains</strong> to see available services including walking connections.</p>
+            <div class="info-box">
+                <strong>How it works:</strong> Services are fetched from live UK rail data. A <strong>JAX confidence banner</strong> appears above results — this shows the AI model's predicted delay risk for your travel date. <span style="color:var(--green)">High confidence</span> = low delay risk · <span style="color:var(--yellow)">Medium</span> = moderate · <span style="color:var(--red)">Low</span> = high disruption risk.
+            </div>
+            <div class="clock-box">
+                <div>
+                    <div class="live-clock" id="liveClock">--:--:--</div>
+                    <div class="live-date-display" id="liveDate">Loading...</div>
+                </div>
+                <div style="font-size:12px;color:var(--text-dim);line-height:1.7">Current local time<br><span style="color:var(--accent)">Date &amp; time pre-filled below</span></div>
+            </div>
             <div class="form-row">
                 <div class="field">
                     <label>From</label>
@@ -167,7 +186,11 @@
     <div class="tab-content" id="tab-board">
         <div class="card">
             <h2>🚆 Live Departure Board</h2>
-            <p class="desc">Enter any UK station CRS code to view live departures.</p>
+            <p class="desc">Enter a 3-letter UK station <strong style="color:var(--text)">CRS code</strong> to view real-time departures, platform numbers, and delay status for that station.</p>
+            <div class="info-box">
+                <strong>Common CRS codes on this route:</strong> MAN = Manchester Piccadilly · SPT = Stockport · MAC = Macclesfield · SOT = Stoke-on-Trent · CRE = Crewe · RUG = Rugby · MKC = Milton Keynes Central · EUS = London Euston<br>
+                <strong>Reading the status:</strong> <span style="color:var(--green)">On time</span> means the train is running as scheduled. Delays are shown as <span style="color:var(--red)">+X mins</span>. Scheduled times include minutes remaining until departure.
+            </div>
             <div class="board-controls">
                 <div><label>Station CRS</label><input type="text" id="crsInput" value="MAN" maxlength="3"></div>
                 <button class="btn" onclick="getBoard()">Load Board</button>
@@ -183,7 +206,13 @@
     <div class="tab-content" id="tab-confidence">
         <div class="card">
             <h2>🧠 AI Delay Confidence</h2>
-            <p class="desc">Check the JAX model's delay prediction and confidence score for any date.</p>
+            <p class="desc">Enter a travel date to get the JAX neural network's delay prediction and confidence rating for the full Manchester–Euston route on that day.</p>
+            <div class="info-box">
+                <strong>Understanding the metrics:</strong><br>
+                <strong>Predicted Delay</strong> — estimated total minutes of delay for that day, based on learned historical patterns.<br>
+                <strong>Stress Coefficient</strong> — a 0–100% measure of route pressure; above 60% signals a high-risk travel day.<br>
+                <strong>Model RMSE</strong> — the JAX model's average prediction error in minutes (lower = more accurate). A lower RMSE means you can trust the forecast more.
+            </div>
             <div class="form-row">
                 <div class="field"><label>Travel Date</label><input type="date" id="travelDate"></div>
                 <button class="btn" onclick="checkConfidence()">Check Forecast</button>
@@ -197,9 +226,9 @@
                     </div>
                 </div>
                 <div class="result-stats">
-                    <div class="stat-card"><div class="stat-value" id="statMins">--</div><div class="stat-label">Predicted Delay (mins)</div></div>
-                    <div class="stat-card"><div class="stat-value" id="statStress">--</div><div class="stat-label">Stress Coefficient</div></div>
-                    <div class="stat-card"><div class="stat-value" id="statRmse">--</div><div class="stat-label">Model RMSE (±mins)</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statMins">--</div><div class="stat-label">Predicted Delay (mins)</div><div class="metric-hint">Expected total delay for the day</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statStress">--</div><div class="stat-label">Stress Coefficient</div><div class="metric-hint">Route stress 0–100% &mdash; above 60% is high risk</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statRmse">--</div><div class="stat-label">Model RMSE (±mins)</div><div class="metric-hint">Model accuracy margin &mdash; lower is better</div></div>
                 </div>
             </div>
         </div>
@@ -209,11 +238,22 @@
     <div class="tab-content" id="tab-forecast">
         <div class="card">
             <h2>📈 30-Day JAX Forecast</h2>
-            <p class="desc">Predicted daily delay and route stress. Click any day to check confidence.</p>
+            <p class="desc">The JAX neural network's predicted daily delay and route stress for the next 30 days. Each card shows how risky that day is for travel — click any card to open the full confidence analysis.</p>
+            <div class="info-box">
+                <strong>How to read the cards:</strong> Each day shows predicted delay in minutes and a route stress percentage derived from historical delay patterns. Higher stress = higher disruption risk.<br>
+                <strong>Stress colour scale:</strong>
+                <div class="stress-legend">
+                    <span class="stress-legend-item"><span class="stress-dot" style="background:#22c55e"></span>0–20% Low</span>
+                    <span class="stress-legend-item"><span class="stress-dot" style="background:#84cc16"></span>20–40% Moderate</span>
+                    <span class="stress-legend-item"><span class="stress-dot" style="background:#eab308"></span>40–60% Elevated</span>
+                    <span class="stress-legend-item"><span class="stress-dot" style="background:#f97316"></span>60–80% High</span>
+                    <span class="stress-legend-item"><span class="stress-dot" style="background:#ef4444"></span>80%+ Critical</span>
+                </div>
+            </div>
             <div class="jax-status">
-                <div class="stat-card"><div class="stat-value" id="jaxRmse">--</div><div class="stat-label">Model RMSE</div></div>
-                <div class="stat-card"><div class="stat-value" id="jaxDays">--</div><div class="stat-label">Training Days</div></div>
-                <div class="stat-card"><div class="stat-value" id="jaxUpdated">--</div><div class="stat-label">Last Updated</div></div>
+                <div class="stat-card"><div class="stat-value" id="jaxRmse">--</div><div class="stat-label">Model RMSE</div><div class="metric-hint">Avg. error in minutes</div></div>
+                <div class="stat-card"><div class="stat-value" id="jaxDays">--</div><div class="stat-label">Training Days</div><div class="metric-hint">Historical records used</div></div>
+                <div class="stat-card"><div class="stat-value" id="jaxUpdated">--</div><div class="stat-label">Last Updated</div><div class="metric-hint">Last model retrain</div></div>
             </div>
             <div class="forecast-grid" id="forecastGrid"><div class="no-results"><span class="loading-spinner"></span> Loading forecast data...</div></div>
         </div>
@@ -269,13 +309,18 @@ async function planTrip() {
         if (data.status === 'ok') {
             var html = '';
 
+            // Date header
+            var dateObj = new Date(date + 'T00:00:00');
+            var dateStr = dateObj.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+            html += '<p style="font-size:12px;color:var(--text-dim);margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">Showing trains for <strong style="color:var(--text)">'+dateStr+'</strong></p>';
+
             // JAX prediction banner
             if (data.jax_prediction) {
                 var jp = data.jax_prediction;
                 html += '<div class="jax-banner" style="background:'+jp.color+'15;border:1px solid '+jp.color+'30">';
                 html += '<div class="jax-badge" style="background:'+jp.color+'">'+jp.confidence+'</div>';
-                html += '<div class="jax-info"><h4 style="color:'+jp.color+'">'+jp.confidence+' Confidence for '+date+'</h4>';
-                html += '<p>JAX predicts '+jp.stress_coefficient*100+'% route stress · Model accuracy ±'+jp.rmse+' mins</p></div></div>';
+                html += '<div class="jax-info"><h4 style="color:'+jp.color+'">'+jp.confidence+' Confidence — '+dateStr+'</h4>';
+                html += '<p>JAX predicts '+(jp.stress_coefficient*100).toFixed(1)+'% route stress &middot; Model accuracy &plusmn;'+jp.rmse+' mins</p></div></div>';
             }
 
             if (data.journeys.length === 0) {
@@ -338,11 +383,22 @@ async function getBoard() {
             }
             var plat=train.platform||'-', etd=train.etd||'N/A', operator=train.operator||train.operatorCode||'';
             var isCancelled=train.isCancelled||false;
-            var sc='ontime',st=etd;
-            if(isCancelled||etd.toLowerCase()==='cancelled'){sc='cancelled';st='CANCELLED';}
-            else if(etd!=='On time'&&etd!=='N/A')sc='late';
-            var dt=String(std).substring(0,5); try{dt=new Date(std).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}catch(e){}
-            row.innerHTML='<td style="font-family:JetBrains Mono,monospace;font-weight:600">'+dt+'</td><td>'+destName+'</td><td style="text-align:center">'+plat+'</td><td class="'+sc+'">'+st+'</td><td style="color:var(--text-dim)">'+operator+'</td>';
+            var sc='ontime', st='On time';
+            var delayMins = calcDelay(std, etd);
+            if (isCancelled || etd.toLowerCase() === 'cancelled') {
+                sc = 'cancelled'; st = 'CANCELLED';
+            } else if (etd.toLowerCase() === 'delayed') {
+                sc = 'late'; st = 'Delayed';
+            } else if (delayMins !== null) {
+                sc = 'late'; st = '+' + delayMins + ' min' + (delayMins !== 1 ? 's' : '');
+            } else if (etd === 'On time') {
+                sc = 'ontime'; st = 'On time';
+            } else if (etd !== 'N/A') {
+                sc = 'late'; st = String(etd).substring(0, 5);
+            }
+            var dt = formatDepTime(std);
+            var relT = relativeTime(std);
+            row.innerHTML='<td style="font-family:JetBrains Mono,monospace;font-weight:600">'+dt+relT+'</td><td>'+destName+'</td><td style="text-align:center">'+plat+'</td><td class="'+sc+'">'+st+'</td><td style="color:var(--text-dim)">'+operator+'</td>';
             tbody.appendChild(row);
         });
     } catch(e) { tbody.innerHTML='<tr><td colspan="5" style="color:var(--red)">Error loading data.</td></tr>'; }
@@ -416,6 +472,55 @@ function selectForecastDate(ds) {
 }
 
 function stressColor(s){if(s<0.2)return'#22c55e';if(s<0.4)return'#84cc16';if(s<0.6)return'#eab308';if(s<0.8)return'#f97316';return'#ef4444';}
+
+// ===== HELPER: TIME FORMATTING =====
+function formatDepTime(std) {
+    var t = String(std).substring(0, 5);
+    try { var d = new Date(std); if (!isNaN(d.getTime())) t = d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}); } catch(e) {}
+    return t;
+}
+
+function calcDelay(std, etd) {
+    if (!std || !etd) return null;
+    var etdL = String(etd).toLowerCase().trim();
+    if (etdL === 'on time' || etdL === 'cancelled' || etdL === 'delayed' || etdL === 'n/a' || etdL === 'no report') return null;
+    try {
+        var t1 = String(std).substring(0, 5).split(':');
+        var t2 = String(etd).substring(0, 5).split(':');
+        if (t1.length < 2 || t2.length < 2) return null;
+        var base = new Date(); base.setSeconds(0, 0);
+        var d1 = new Date(base); d1.setHours(parseInt(t1[0], 10), parseInt(t1[1], 10));
+        var d2 = new Date(base); d2.setHours(parseInt(t2[0], 10), parseInt(t2[1], 10));
+        var diff = (d2 - d1) / 60000;
+        if (diff < -720) diff += 1440;
+        if (diff > 720) diff -= 1440;
+        return diff > 0 ? Math.round(diff) : null;
+    } catch(e) { return null; }
+}
+
+function relativeTime(std) {
+    try {
+        var t = String(std).substring(0, 5).split(':');
+        if (t.length < 2) return '';
+        var dep = new Date(); dep.setHours(parseInt(t[0], 10), parseInt(t[1], 10), 0, 0);
+        var diff = (dep - new Date()) / 60000;
+        if (diff < -720) diff += 1440;
+        if (diff <= 0 && diff > -2) return '<span style="color:var(--text-dim);font-size:11px"> (due)</span>';
+        if (diff > 0 && diff < 60) return '<span style="color:var(--text-dim);font-size:11px"> (in ' + Math.round(diff) + 'm)</span>';
+    } catch(e) {}
+    return '';
+}
+
+// ===== LIVE CLOCK =====
+function updateClock() {
+    var now = new Date();
+    var el = document.getElementById('liveClock');
+    var elD = document.getElementById('liveDate');
+    if (el) el.textContent = now.toLocaleTimeString('en-GB');
+    if (elD) elD.textContent = now.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+updateClock();
+setInterval(updateClock, 1000);
 
 loadForecast();
 </script>
