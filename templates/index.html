@@ -391,10 +391,8 @@ async function getBoard() {
                 sc = 'late'; st = 'Delayed';
             } else if (delayMins !== null) {
                 sc = 'late'; st = '+' + delayMins + ' min' + (delayMins !== 1 ? 's' : '');
-            } else if (etd === 'On time') {
+            } else if (etd === 'On time' || delayMins === null) {
                 sc = 'ontime'; st = 'On time';
-            } else if (etd !== 'N/A') {
-                sc = 'late'; st = String(etd).substring(0, 5);
             }
             var dt = formatDepTime(std);
             var relT = relativeTime(std);
@@ -474,10 +472,18 @@ function selectForecastDate(ds) {
 function stressColor(s){if(s<0.2)return'#22c55e';if(s<0.4)return'#84cc16';if(s<0.6)return'#eab308';if(s<0.8)return'#f97316';return'#ef4444';}
 
 // ===== HELPER: TIME FORMATTING =====
+// Extract HH:MM from any format: ISO datetime "2026-03-27T13:04:00", "13:04", or partial strings
+function toHHMM(s) {
+    if (!s) return null;
+    s = String(s).trim();
+    if (s.indexOf('T') !== -1) s = s.split('T')[1]; // strip date part from ISO
+    var t = s.substring(0, 5);
+    return /^\d{2}:\d{2}$/.test(t) ? t : null;
+}
+
 function formatDepTime(std) {
-    var t = String(std).substring(0, 5);
-    try { var d = new Date(std); if (!isNaN(d.getTime())) t = d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}); } catch(e) {}
-    return t;
+    var t = toHHMM(std);
+    return t || String(std).substring(0, 5);
 }
 
 function calcDelay(std, etd) {
@@ -485,12 +491,12 @@ function calcDelay(std, etd) {
     var etdL = String(etd).toLowerCase().trim();
     if (etdL === 'on time' || etdL === 'cancelled' || etdL === 'delayed' || etdL === 'n/a' || etdL === 'no report') return null;
     try {
-        var t1 = String(std).substring(0, 5).split(':');
-        var t2 = String(etd).substring(0, 5).split(':');
-        if (t1.length < 2 || t2.length < 2) return null;
+        var t1 = toHHMM(std); var t2 = toHHMM(etd);
+        if (!t1 || !t2) return null;
+        var p1 = t1.split(':'), p2 = t2.split(':');
         var base = new Date(); base.setSeconds(0, 0);
-        var d1 = new Date(base); d1.setHours(parseInt(t1[0], 10), parseInt(t1[1], 10));
-        var d2 = new Date(base); d2.setHours(parseInt(t2[0], 10), parseInt(t2[1], 10));
+        var d1 = new Date(base); d1.setHours(parseInt(p1[0], 10), parseInt(p1[1], 10));
+        var d2 = new Date(base); d2.setHours(parseInt(p2[0], 10), parseInt(p2[1], 10));
         var diff = (d2 - d1) / 60000;
         if (diff < -720) diff += 1440;
         if (diff > 720) diff -= 1440;
@@ -500,9 +506,10 @@ function calcDelay(std, etd) {
 
 function relativeTime(std) {
     try {
-        var t = String(std).substring(0, 5).split(':');
-        if (t.length < 2) return '';
-        var dep = new Date(); dep.setHours(parseInt(t[0], 10), parseInt(t[1], 10), 0, 0);
+        var t = toHHMM(std);
+        if (!t) return '';
+        var parts = t.split(':');
+        var dep = new Date(); dep.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), 0, 0);
         var diff = (dep - new Date()) / 60000;
         if (diff < -720) diff += 1440;
         if (diff <= 0 && diff > -2) return '<span style="color:var(--text-dim);font-size:11px"> (due)</span>';
