@@ -26,7 +26,6 @@
         .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:28px; margin-bottom:24px; }
         .card h2 { font-size:20px; font-weight:700; margin-bottom:6px; }
         .card .desc { color:var(--text-dim); font-size:13px; margin-bottom:20px; }
-        /* Form elements */
         label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); display:block; margin-bottom:6px; }
         select, input[type="date"], input[type="time"], input[type="text"] { width:100%; padding:10px 14px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; outline:none; appearance:none; }
         select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; }
@@ -35,10 +34,8 @@
         .btn { padding:10px 24px; background:var(--accent); color:white; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.3s; white-space:nowrap; }
         .btn:hover { background:#2563eb; transform:translateY(-1px); box-shadow:0 4px 16px rgba(59,130,246,0.3); }
         .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
-        /* Grid layouts */
         .form-row { display:flex; gap:14px; align-items:end; margin-bottom:20px; flex-wrap:wrap; }
         .form-row .field { flex:1; min-width:140px; }
-        /* Departure board */
         .board-controls { display:flex; gap:12px; align-items:end; margin-bottom:20px; }
         .board-controls input { width:100px; font-family:'JetBrains Mono',monospace; font-size:16px; text-transform:uppercase; }
         table { width:100%; border-collapse:collapse; }
@@ -48,7 +45,6 @@
         .late { color:var(--red); font-weight:600; }
         .ontime { color:var(--green); font-weight:600; }
         .cancelled { color:var(--red); font-weight:700; }
-        /* Journey results */
         .journey-card { background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:12px; }
         .journey-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
         .journey-time { font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; }
@@ -62,12 +58,10 @@
         .leg-details { flex:1; }
         .leg-details .leg-route { font-weight:600; }
         .leg-details .leg-time { color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:12px; }
-        /* JAX banner in journey results */
         .jax-banner { display:flex; align-items:center; gap:16px; padding:16px; border-radius:10px; margin-bottom:16px; }
         .jax-badge { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:white; flex-shrink:0; }
         .jax-info h4 { font-size:15px; margin-bottom:2px; }
         .jax-info p { font-size:12px; opacity:0.8; }
-        /* Confidence planner */
         .confidence-banner { display:flex; align-items:center; gap:18px; padding:20px; border-radius:12px; margin-bottom:16px; }
         .confidence-score { width:72px;height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:white; flex-shrink:0; }
         .confidence-details h3 { font-size:17px; margin-bottom:4px; }
@@ -78,7 +72,6 @@
         .stat-card { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; }
         .stat-value { font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; margin-bottom:4px; }
         .stat-label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; }
-        /* Forecast */
         .jax-status { display:flex; gap:16px; margin-bottom:20px; }
         .jax-status .stat-card { flex:1; }
         .forecast-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; }
@@ -89,7 +82,6 @@
         .forecast-stress { font-size:10px; font-family:'JetBrains Mono',monospace; }
         .stress-bar { height:3px; border-radius:2px; margin-top:6px; background:var(--border); overflow:hidden; }
         .stress-bar-fill { height:100%; border-radius:2px; transition:width 0.6s ease; }
-        /* Utils */
         .footer { text-align:center; padding:32px 0 16px; color:var(--text-dim); font-size:11px; }
         .footer a { color:var(--accent); text-decoration:none; }
         .loading-spinner { display:inline-block; width:14px;height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin-right:6px; vertical-align:middle; }
@@ -114,24 +106,24 @@
 <div class="container">
     <div class="header">
         <div class="header-badge"><span class="pulse"></span> JAX Neural Network · Live</div>
-        <h1>Manchester → Euston</h1>
+        <h1>Manchester &#8594; Euston</h1>
         <p class="subtitle">AI-powered delay prediction · Journey planner · Live departures</p>
     </div>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab(this,'planner')">🗓 Journey Planner</div>
-        <div class="tab" onclick="switchTab(this,'board')">🚆 Departure Board</div>
-        <div class="tab" onclick="switchTab(this,'confidence')">🧠 AI Confidence</div>
-        <div class="tab" onclick="switchTab(this,'forecast')">📈 30-Day Forecast</div>
+        <div class="tab active" onclick="switchTab(this,'planner')">&#128197; Journey Planner</div>
+        <div class="tab" onclick="switchTab(this,'board')">&#128646; Departure Board</div>
+        <div class="tab" onclick="switchTab(this,'confidence')">&#129504; AI Confidence</div>
+        <div class="tab" onclick="switchTab(this,'forecast')">&#128200; 30-Day Forecast</div>
     </div>
 
     <!-- TAB 1: Journey Planner (TransportAPI) -->
     <div class="tab-content active" id="tab-planner">
         <div class="card">
-            <h2>🗓 Journey Planner</h2>
-            <p class="desc">Plan a train journey between any two stations on the Manchester–London Euston route. Select your origin, destination, date and departure time, then click <strong style="color:var(--text)">Find Trains</strong> to see available services including walking connections.</p>
+            <h2>&#128197; Journey Planner</h2>
+            <p class="desc">Plan a train journey between any two stations on the Manchester&#8211;London Euston route. Select your origin, destination, date and departure time, then click <strong style="color:var(--text)">Find Trains</strong> to see available services including walking connections.</p>
             <div class="info-box">
-                <strong>How it works:</strong> Services are fetched from live UK rail data. A <strong>JAX confidence banner</strong> appears above results — this shows the AI model's predicted delay risk for your travel date. <span style="color:var(--green)">High confidence</span> = low delay risk · <span style="color:var(--yellow)">Medium</span> = moderate · <span style="color:var(--red)">Low</span> = high disruption risk.
+                <strong>How it works:</strong> Services are fetched from live UK rail data. A <strong>JAX confidence banner</strong> appears above results &#8212; this shows the AI model's predicted delay risk for your travel date. <span style="color:var(--green)">High confidence</span> = low delay risk &#183; <span style="color:var(--yellow)">Medium</span> = moderate &#183; <span style="color:var(--red)">Low</span> = high disruption risk.
             </div>
             <div class="clock-box">
                 <div>
@@ -154,7 +146,7 @@
                         <option value="EUS">London Euston</option>
                     </select>
                 </div>
-                <button class="swap-btn" onclick="swapStations()" title="Swap">⇄</button>
+                <button class="swap-btn" onclick="swapStations()" title="Swap">&#8660;</button>
                 <div class="field">
                     <label>To</label>
                     <select id="jpTo">
@@ -185,10 +177,10 @@
     <!-- TAB 2: Departure Board -->
     <div class="tab-content" id="tab-board">
         <div class="card">
-            <h2>🚆 Live Departure Board</h2>
+            <h2>&#128646; Live Departure Board</h2>
             <p class="desc">Enter a 3-letter UK station <strong style="color:var(--text)">CRS code</strong> to view real-time departures, platform numbers, and delay status for that station.</p>
             <div class="info-box">
-                <strong>Common CRS codes on this route:</strong> MAN = Manchester Piccadilly · SPT = Stockport · MAC = Macclesfield · SOT = Stoke-on-Trent · CRE = Crewe · RUG = Rugby · MKC = Milton Keynes Central · EUS = London Euston<br>
+                <strong>Common CRS codes on this route:</strong> MAN = Manchester Piccadilly &#183; SPT = Stockport &#183; MAC = Macclesfield &#183; SOT = Stoke-on-Trent &#183; CRE = Crewe &#183; RUG = Rugby &#183; MKC = Milton Keynes Central &#183; EUS = London Euston<br>
                 <strong>Reading the status:</strong> <span style="color:var(--green)">On time</span> means the train is running as scheduled. Delays are shown as <span style="color:var(--red)">+X mins</span>. Scheduled times include minutes remaining until departure.
             </div>
             <div class="board-controls">
@@ -205,13 +197,13 @@
     <!-- TAB 3: AI Confidence -->
     <div class="tab-content" id="tab-confidence">
         <div class="card">
-            <h2>🧠 AI Delay Confidence</h2>
-            <p class="desc">Enter a travel date to get the JAX neural network's delay prediction and confidence rating for the full Manchester–Euston route on that day.</p>
+            <h2>&#129504; AI Delay Confidence</h2>
+            <p class="desc">Enter a travel date to get the JAX neural network's delay prediction and confidence rating for the full Manchester&#8211;Euston route on that day.</p>
             <div class="info-box">
                 <strong>Understanding the metrics:</strong><br>
-                <strong>Predicted Delay</strong> — estimated total minutes of delay for that day, based on learned historical patterns.<br>
-                <strong>Stress Coefficient</strong> — a 0–100% measure of route pressure; above 60% signals a high-risk travel day.<br>
-                <strong>Model RMSE</strong> — the JAX model's average prediction error in minutes (lower = more accurate). A lower RMSE means you can trust the forecast more.
+                <strong>Predicted Delay</strong> &#8212; estimated total minutes of delay for that day, based on learned historical patterns.<br>
+                <strong>Stress Coefficient</strong> &#8212; a 0&#8211;100% measure of route pressure; above 60% signals a high-risk travel day.<br>
+                <strong>Model RMSE</strong> &#8212; the JAX model's average prediction error in minutes (lower = more accurate). A lower RMSE means you can trust the forecast more.
             </div>
             <div class="form-row">
                 <div class="field"><label>Travel Date</label><input type="date" id="travelDate"></div>
@@ -227,8 +219,8 @@
                 </div>
                 <div class="result-stats">
                     <div class="stat-card"><div class="stat-value" id="statMins">--</div><div class="stat-label">Predicted Delay (mins)</div><div class="metric-hint">Expected total delay for the day</div></div>
-                    <div class="stat-card"><div class="stat-value" id="statStress">--</div><div class="stat-label">Stress Coefficient</div><div class="metric-hint">Route stress 0–100% &mdash; above 60% is high risk</div></div>
-                    <div class="stat-card"><div class="stat-value" id="statRmse">--</div><div class="stat-label">Model RMSE (±mins)</div><div class="metric-hint">Model accuracy margin &mdash; lower is better</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statStress">--</div><div class="stat-label">Stress Coefficient</div><div class="metric-hint">Route stress 0&#8211;100% &#8212; above 60% is high risk</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statRmse">--</div><div class="stat-label">Model RMSE (&#177;mins)</div><div class="metric-hint">Model accuracy margin &#8212; lower is better</div></div>
                 </div>
             </div>
         </div>
@@ -237,16 +229,16 @@
     <!-- TAB 4: 30-Day Forecast -->
     <div class="tab-content" id="tab-forecast">
         <div class="card">
-            <h2>📈 30-Day JAX Forecast</h2>
-            <p class="desc">The JAX neural network's predicted daily delay and route stress for the next 30 days. Each card shows how risky that day is for travel — click any card to open the full confidence analysis.</p>
+            <h2>&#128200; 30-Day JAX Forecast</h2>
+            <p class="desc">The JAX neural network's predicted daily delay and route stress for the next 30 days. Each card shows how risky that day is for travel &#8212; click any card to open the full confidence analysis.</p>
             <div class="info-box">
                 <strong>How to read the cards:</strong> Each day shows predicted delay in minutes and a route stress percentage derived from historical delay patterns. Higher stress = higher disruption risk.<br>
                 <strong>Stress colour scale:</strong>
                 <div class="stress-legend">
-                    <span class="stress-legend-item"><span class="stress-dot" style="background:#22c55e"></span>0–20% Low</span>
-                    <span class="stress-legend-item"><span class="stress-dot" style="background:#84cc16"></span>20–40% Moderate</span>
-                    <span class="stress-legend-item"><span class="stress-dot" style="background:#eab308"></span>40–60% Elevated</span>
-                    <span class="stress-legend-item"><span class="stress-dot" style="background:#f97316"></span>60–80% High</span>
+                    <span class="stress-legend-item"><span class="stress-dot" style="background:#22c55e"></span>0&#8211;20% Low</span>
+                    <span class="stress-legend-item"><span class="stress-dot" style="background:#84cc16"></span>20&#8211;40% Moderate</span>
+                    <span class="stress-legend-item"><span class="stress-dot" style="background:#eab308"></span>40&#8211;60% Elevated</span>
+                    <span class="stress-legend-item"><span class="stress-dot" style="background:#f97316"></span>60&#8211;80% High</span>
                     <span class="stress-legend-item"><span class="stress-dot" style="background:#ef4444"></span>80%+ Critical</span>
                 </div>
             </div>
@@ -260,8 +252,8 @@
     </div>
 
     <div class="footer">
-        TrainJAX · <a href="#">JAX/Flax Neural Network</a> · Manchester to Euston
-        <br>Journey planning by TransportAPI · Predictions from PostgreSQL · Live data from Network Rail
+        TrainJAX &#183; <a href="#">JAX/Flax Neural Network</a> &#183; Manchester to Euston
+        <br>Journey planning by TransportAPI &#183; Predictions from PostgreSQL &#183; Live data from Network Rail
     </div>
 </div>
 
@@ -319,8 +311,8 @@ async function planTrip() {
                 var jp = data.jax_prediction;
                 html += '<div class="jax-banner" style="background:'+jp.color+'15;border:1px solid '+jp.color+'30">';
                 html += '<div class="jax-badge" style="background:'+jp.color+'">'+jp.confidence+'</div>';
-                html += '<div class="jax-info"><h4 style="color:'+jp.color+'">'+jp.confidence+' Confidence — '+dateStr+'</h4>';
-                html += '<p>JAX predicts '+(jp.stress_coefficient*100).toFixed(1)+'% route stress &middot; Model accuracy &plusmn;'+jp.rmse+' mins</p></div></div>';
+                html += '<div class="jax-info"><h4 style="color:'+jp.color+'">'+jp.confidence+' Confidence \u2014 '+dateStr+'</h4>';
+                html += '<p>JAX predicts '+(jp.stress_coefficient*100).toFixed(1)+'% route stress \u00b7 Model accuracy \u00b1'+jp.rmse+' mins</p></div></div>';
             }
 
             if (data.journeys.length === 0) {
@@ -330,19 +322,19 @@ async function planTrip() {
                     var j = data.journeys[i];
                     html += '<div class="journey-card">';
                     html += '<div class="journey-header">';
-                    html += '<div><span class="journey-time">'+j.departure+'</span><span class="journey-arrow">→</span><span class="journey-time">'+j.arrival+'</span></div>';
+                    html += '<div><span class="journey-time">'+j.departure+'</span><span class="journey-arrow">\u2192</span><span class="journey-time">'+j.arrival+'</span></div>';
                     html += '<div class="journey-duration">'+j.duration+'</div></div>';
                     html += '<div class="journey-legs">';
                     for (var k = 0; k < j.legs.length; k++) {
                         var leg = j.legs[k];
-                        var icon = leg.mode === 'foot' ? '🚶' : '🚆';
+                        var icon = leg.mode === 'foot' ? '\ud83d\udeb6' : '\ud83d\ude86';
                         var iconClass = leg.mode === 'foot' ? 'foot' : 'train';
                         html += '<div class="leg">';
                         html += '<div class="leg-icon '+iconClass+'">'+icon+'</div>';
                         html += '<div class="leg-details">';
-                        html += '<div class="leg-route">'+leg.from+' → '+leg.to+'</div>';
-                        if (leg.destination) html += '<div class="leg-time">towards '+leg.destination+' · '+leg.departure+' - '+leg.arrival+'</div>';
-                        else html += '<div class="leg-time">'+leg.departure+' - '+leg.arrival+' · '+leg.duration+'</div>';
+                        html += '<div class="leg-route">'+leg.from+' \u2192 '+leg.to+'</div>';
+                        if (leg.destination) html += '<div class="leg-time">towards '+leg.destination+' \u00b7 '+leg.departure+' - '+leg.arrival+'</div>';
+                        else html += '<div class="leg-time">'+leg.departure+' - '+leg.arrival+' \u00b7 '+leg.duration+'</div>';
                         html += '</div></div>';
                     }
                     html += '</div></div>';
@@ -421,10 +413,10 @@ async function checkConfidence() {
             document.getElementById('statMins').textContent=Math.round(data.predicted_minutes);
             document.getElementById('statMins').style.color=data.color;
             document.getElementById('statStress').textContent=(data.stress_coefficient*100).toFixed(1)+'%';
-            document.getElementById('statRmse').textContent='±'+data.rmse;
+            document.getElementById('statRmse').textContent='\u00b1'+data.rmse;
         } else {
             document.getElementById('confidenceScore').style.background='var(--text-dim)';
-            document.getElementById('confidenceScore').textContent='—';
+            document.getElementById('confidenceScore').textContent='\u2014';
             document.getElementById('confidenceTitle').textContent='No Data';
             document.getElementById('confidenceTitle').style.color='var(--text-dim)';
             document.getElementById('confidenceText').textContent=data.message||'No prediction for this date.';
@@ -441,7 +433,7 @@ async function loadForecast() {
             var all=data.predictions, forecasts=[], actuals=[];
             for(var i=0;i<all.length;i++){if(all[i].data_type==='Forecast')forecasts.push(all[i]);else actuals.push(all[i]);}
             if(all.length>0){
-                document.getElementById('jaxRmse').textContent='±'+all[0].rmse;
+                document.getElementById('jaxRmse').textContent='\u00b1'+all[0].rmse;
                 document.getElementById('jaxDays').textContent=actuals.length;
                 if(all[0].updated_at){var d=new Date(all[0].updated_at);document.getElementById('jaxUpdated').textContent=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});}
             }
@@ -472,11 +464,10 @@ function selectForecastDate(ds) {
 function stressColor(s){if(s<0.2)return'#22c55e';if(s<0.4)return'#84cc16';if(s<0.6)return'#eab308';if(s<0.8)return'#f97316';return'#ef4444';}
 
 // ===== HELPER: TIME FORMATTING =====
-// Extract HH:MM from any format: ISO datetime "2026-03-27T13:04:00", "13:04", or partial strings
 function toHHMM(s) {
     if (!s) return null;
     s = String(s).trim();
-    if (s.indexOf('T') !== -1) s = s.split('T')[1]; // strip date part from ISO
+    if (s.indexOf('T') !== -1) s = s.split('T')[1];
     var t = s.substring(0, 5);
     return /^\d{2}:\d{2}$/.test(t) ? t : null;
 }
@@ -544,7 +535,5 @@ loadForecast();
   data-starting-message="Hello! I'm TrainJAX, your Manchester to Euston rail assistant. Ask me about train times, delays, or travel predictions!"
   data-logo="/static/chatbot/icons/default-agent.svg">
 </script>
-</body>
-</html>
 </body>
 </html>
