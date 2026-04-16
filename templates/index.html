@@ -354,23 +354,12 @@
         <section role="tabpanel" id="tab-routes" aria-labelledby="btn-routes" tabindex="0">
             <div class="card">
                 <h2>Google Routes</h2>
-                <p class="desc">Display road/transit directions between stations using the Google Routes API. Enter your API key once to enable the map.</p>
+                <p class="desc">Display road/transit directions between stations using the Google Routes API.</p>
 
-                <!-- API Key setup -->
-                <div class="info-box">
-                    <strong>Setup:</strong> You need a Google Cloud API key with the <strong>Routes API</strong> and <strong>Maps JavaScript API</strong> enabled.
-                    <a href="https://console.cloud.google.com/apis/library/routes.googleapis.com" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600">Enable in Cloud Console ↗</a>
-                </div>
-                <div class="api-key-bar">
-                    <div class="field">
-                        <label for="googleApiKey">Google API Key</label>
-                        <input type="text" id="googleApiKey" placeholder="AIza..." autocomplete="off" spellcheck="false">
-                    </div>
-                    <button class="btn" onclick="initGoogleMaps()">Connect</button>
-                    <button class="btn btn-secondary" onclick="clearApiKey()">Clear</button>
-                </div>
-                <div id="apiKeyStatus" class="api-key-status idle" role="status">
-                    <span>⬤</span> No key entered
+                <!-- Hidden inputs — key loaded automatically from backend config -->
+                <input type="hidden" id="googleApiKey">
+                <div id="apiKeyStatus" class="api-key-status idle" role="status" style="margin-bottom:16px">
+                    <span>⬤</span> Connecting to Google Maps…
                 </div>
 
                 <!-- Route planner inputs -->
@@ -404,7 +393,7 @@
                 <div id="routesMap">
                     <div class="map-placeholder">
                         <div class="map-icon">🗺️</div>
-                        <div>Enter your Google API key above to load the map</div>
+                        <div>Connecting to Google Maps…</div>
                         <div style="font-size:12px;color:var(--text-dim)">Routes API &middot; Maps JavaScript API</div>
                     </div>
                 </div>
@@ -898,13 +887,25 @@ function relativeTime(s){try{var t=toHHMM(s);if(!t)return'';var p=t.split(':');v
 let googleMap = null;
 let directionsRenderer = null;
 let googleMapsLoaded = false;
-const STORED_KEY = 'trainjax_google_api_key';
+const GOOGLE_API_KEY = 'AIzaSyBEUwtzoIJ5VmrihqJPTbU5y6F2SPcuS_4';
 
-// Restore saved key on load
+// Auto-load Google Maps on page ready
 window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem(STORED_KEY);
-    if (saved) { document.getElementById('googleApiKey').value = saved; }
+    document.getElementById('googleApiKey').value = GOOGLE_API_KEY;
+    loadGoogleMapsScript(GOOGLE_API_KEY);
 });
+
+function loadGoogleMapsScript(key) {
+    const old = document.getElementById('gmaps-script');
+    if (old) old.remove();
+    const script = document.createElement('script');
+    script.id = 'gmaps-script';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=onGoogleMapsLoaded`;
+    script.async = true; script.defer = true;
+    script.onerror = () => setApiKeyStatus('err', 'Failed to load Maps — check key & billing');
+    document.head.appendChild(script);
+    setApiKeyStatus('idle', 'Loading Google Maps…');
+}
 
 function setApiKeyStatus(state, msg) {
     const el = document.getElementById('apiKeyStatus');
@@ -913,32 +914,11 @@ function setApiKeyStatus(state, msg) {
 }
 
 function clearApiKey() {
-    localStorage.removeItem(STORED_KEY);
-    document.getElementById('googleApiKey').value = '';
-    setApiKeyStatus('idle', 'No key entered');
-    document.getElementById('routeFormRow').style.display = 'none';
-    document.getElementById('routeSummary').style.display = 'none';
-    document.getElementById('routeSteps').style.display = 'none';
-    document.getElementById('routesMap').innerHTML = '<div class="map-placeholder"><div class="map-icon">🗺️</div><div>Enter your Google API key above to load the map</div><div style="font-size:12px;color:var(--text-dim)">Routes API · Maps JavaScript API</div></div>';
-    googleMap = null; googleMapsLoaded = false;
+    loadGoogleMapsScript(GOOGLE_API_KEY);
 }
 
 function initGoogleMaps() {
-    const key = document.getElementById('googleApiKey').value.trim();
-    if (!key) { setApiKeyStatus('err', 'Please enter an API key'); return; }
-    localStorage.setItem(STORED_KEY, key);
-    setApiKeyStatus('idle', 'Loading Google Maps…');
-
-    // Remove any existing script
-    const old = document.getElementById('gmaps-script');
-    if (old) old.remove();
-
-    const script = document.createElement('script');
-    script.id = 'gmaps-script';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=onGoogleMapsLoaded`;
-    script.async = true; script.defer = true;
-    script.onerror = () => setApiKeyStatus('err', 'Failed to load Maps — check your key and billing');
-    document.head.appendChild(script);
+    loadGoogleMapsScript(GOOGLE_API_KEY);
 }
 
 window.onGoogleMapsLoaded = function() {
