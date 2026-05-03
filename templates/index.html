@@ -1036,8 +1036,7 @@ async function calcRoute() {
             travelMode: mode,
             routingPreference: mode === 'DRIVE' ? 'TRAFFIC_AWARE' : undefined,
             units: 'IMPERIAL'
-        })
-    });
+        }    });
     const routesData = await routesApiResp.json();
     console.log('Routes API response:', routesData);
     */
