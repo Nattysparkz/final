@@ -168,7 +168,7 @@
         .info-box { background: var(--surface-2); border-radius: var(--radius-sm); padding: 16px 20px; margin-bottom: 20px; font-size: 13px; color: var(--text-sec); line-height: 1.8; }
         .info-box strong { color: var(--text); }
 
-        /* ── Google Routes panel ── */
+        /* ── Route panel ── */
         .api-key-bar {
             display: flex; gap: 10px; align-items: end; margin-bottom: 20px;
         }
@@ -251,7 +251,7 @@
         .confidence-details p { font-size: 14px; color: var(--text-sec); line-height: 1.65; }
         .result { display: none; padding-top: 24px; }
         .result.visible { display: block; animation: fadeUp 0.35s ease; }
-        .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .result-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 
         .stat-card { background: var(--surface-2); border-radius: var(--radius); padding: 20px; text-align: center; }
         .stat-value { font-family: var(--font-mono); font-size: 26px; font-weight: 700; margin-bottom: 4px; }
@@ -301,12 +301,11 @@
     <header class="header" role="banner">
         <div class="header-badge"><span class="pulse" aria-hidden="true"></span>JAX Neural Network &middot; Live</div>
         <h1>Manchester <span class="arrow" aria-hidden="true">&rarr;</span><span class="sr-only">to</span> Euston</h1>
-        <p class="subtitle">AI-powered delay prediction &middot; Journey planner &middot; Live departures &middot; Google Routes</p>
+        <p class="subtitle">AI-powered delay prediction &middot; Journey planner &middot; Live departures</p>
     </header>
 
     <nav role="tablist" aria-label="Main navigation">
         <button class="tab" role="tab" aria-selected="true"  aria-controls="tab-planner"    id="btn-planner"    onclick="switchTab('planner')">Journey Planner</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-routes"     id="btn-routes"     onclick="switchTab('routes')">Google Routes</button>
         <button class="tab" role="tab" aria-selected="false" aria-controls="tab-board"      id="btn-board"      onclick="switchTab('board')">Departures</button>
         <button class="tab" role="tab" aria-selected="false" aria-controls="tab-confidence" id="btn-confidence" onclick="switchTab('confidence')">AI Confidence</button>
         <button class="tab" role="tab" aria-selected="false" aria-controls="tab-forecast"   id="btn-forecast"   onclick="switchTab('forecast')">30-Day Forecast</button>
@@ -350,71 +349,24 @@
             </div>
         </section>
 
-        <!-- ── GOOGLE ROUTES ── -->
-        <section role="tabpanel" id="tab-routes" aria-labelledby="btn-routes" tabindex="0">
-            <div class="card">
-                <h2>Google Routes</h2>
-                <p class="desc">Display road/transit directions between stations using the Google Routes API.</p>
-
-                <!-- Hidden inputs — key loaded automatically from backend config -->
-                <input type="hidden" id="googleApiKey">
-                <div id="apiKeyStatus" class="api-key-status idle" role="status" style="margin-bottom:16px">
-                    <span>⬤</span> Connecting to Google Maps…
-                </div>
-
-                <!-- Route planner inputs -->
-                <div class="form-row" id="routeFormRow" style="display:none">
-                    <div class="station-wrap" id="wrap-r-from">
-                        <label for="rFrom">From (station or address)</label>
-                        <span class="station-icon" aria-hidden="true">📍</span>
-                        <input type="text" class="station-input" id="rFrom" autocomplete="off" placeholder="e.g. Manchester Piccadilly" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded="false" aria-controls="ac-r-from">
-                        <span class="station-crs" id="crs-r-from" aria-live="polite"></span>
-                        <div class="autocomplete-dropdown" id="ac-r-from" role="listbox"></div>
-                    </div>
-                    <div class="station-wrap" id="wrap-r-to">
-                        <label for="rTo">To (station or address)</label>
-                        <span class="station-icon" aria-hidden="true">🏁</span>
-                        <input type="text" class="station-input" id="rTo" autocomplete="off" placeholder="e.g. London Euston" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded="false" aria-controls="ac-r-to">
-                        <span class="station-crs" id="crs-r-to" aria-live="polite"></span>
-                        <div class="autocomplete-dropdown" id="ac-r-to" role="listbox"></div>
-                    </div>
-                    <div class="field">
-                        <label for="rMode">Travel Mode</label>
-                        <select id="rMode">
-                            <option value="DRIVE">🚗 Drive</option>
-                            <option value="TRANSIT">🚆 Transit</option>
-                            <option value="WALK">🚶 Walk</option>
-                            <option value="BICYCLE">🚲 Bicycle</option>
-                        </select>
-                    </div>
-                    <button class="btn" onclick="calcRoute()" style="margin-top:22px">Get Route</button>
-                </div>
-
-                <div id="routesMap">
-                    <div class="map-placeholder">
-                        <div class="map-icon">🗺️</div>
-                        <div>Connecting to Google Maps…</div>
-                        <div style="font-size:12px;color:var(--text-dim)">Routes API &middot; Maps JavaScript API</div>
-                    </div>
-                </div>
-
-                <div class="route-summary" id="routeSummary" style="display:none">
-                    <div class="route-stat"><div class="route-stat-val" id="rDistance">—</div><div class="route-stat-lbl">Distance</div></div>
-                    <div class="route-stat"><div class="route-stat-val" id="rDuration">—</div><div class="route-stat-lbl">Duration</div></div>
-                    <div class="route-stat"><div class="route-stat-val" id="rLegs">—</div><div class="route-stat-lbl">Segments</div></div>
-                </div>
-                <div class="route-steps" id="routeSteps" style="display:none"></div>
-            </div>
-        </section>
-
         <!-- ── DEPARTURES ── -->
         <section role="tabpanel" id="tab-board" aria-labelledby="btn-board" tabindex="0">
             <div class="card">
                 <h2>Live Departure Board</h2>
-                <p class="desc">View real-time departures for any UK station. Enter a 3-letter CRS code below.</p>
-                <div class="info-box" role="note"><strong>Route codes:</strong> MAN &middot; SPT &middot; MAC &middot; SOT &middot; CRE &middot; RUG &middot; MKC &middot; EUS</div>
+                <p class="desc">View real-time departures for Manchester to London Euston corridor stations.</p>
                 <div class="board-controls">
-                    <div><label for="crsInput">Station Code</label><input type="text" id="crsInput" value="MAN" maxlength="3"></div>
+                    <div><label for="crsInput">Station</label>
+                        <select id="crsInput">
+                            <option value="MAN">Manchester Piccadilly</option>
+                            <option value="SPT">Stockport</option>
+                            <option value="MAC">Macclesfield</option>
+                            <option value="SOT">Stoke-on-Trent</option>
+                            <option value="CRE">Crewe</option>
+                            <option value="RUG">Rugby</option>
+                            <option value="MKC">Milton Keynes Central</option>
+                            <option value="EUS">London Euston</option>
+                        </select>
+                    </div>
                     <button class="btn" onclick="getBoard()">Load Board</button>
                 </div>
                 <div role="region" aria-live="polite">
@@ -431,7 +383,7 @@
             <div class="card">
                 <h2>AI Delay Confidence</h2>
                 <p class="desc">Get the JAX neural network's delay prediction and travel confidence for any date.</p>
-                <div class="info-box" role="note"><strong>Predicted Delay</strong> — estimated delay minutes. <strong>Stress Coefficient</strong> — 0–100% route pressure. <strong>RMSE</strong> — model accuracy.</div>
+                <div class="info-box" role="note"><strong>Predicted Delay</strong> — estimated delay minutes. <strong>Stress Coefficient</strong> — 0–100% route pressure.</div>
                 <div class="form-row">
                     <div class="field"><label for="travelDate">Travel Date</label><input type="date" id="travelDate"></div>
                     <button class="btn" onclick="checkConfidence()">Check Forecast</button>
@@ -444,7 +396,6 @@
                     <div class="result-stats">
                         <div class="stat-card"><div class="stat-value" id="statMins">--</div><div class="stat-label">Predicted Delay</div><div class="metric-hint">Minutes of expected delay</div></div>
                         <div class="stat-card"><div class="stat-value" id="statStress">--</div><div class="stat-label">Stress Coefficient</div><div class="metric-hint">Above 60% is high risk</div></div>
-                        <div class="stat-card"><div class="stat-value" id="statRmse">--</div><div class="stat-label">Model RMSE</div><div class="metric-hint">Lower is more accurate</div></div>
                     </div>
                 </div>
             </div>
@@ -465,7 +416,6 @@
                     </div>
                 </div>
                 <div class="jax-status">
-                    <div class="stat-card"><div class="stat-value" id="jaxRmse">--</div><div class="stat-label">Model RMSE</div></div>
                     <div class="stat-card"><div class="stat-value" id="jaxDays">--</div><div class="stat-label">Training Days</div></div>
                     <div class="stat-card"><div class="stat-value" id="jaxUpdated">--</div><div class="stat-label">Last Updated</div></div>
                 </div>
@@ -478,7 +428,7 @@
     </main>
     <footer class="footer" role="contentinfo">
         <p>TrainJAX &middot; Powered by <a href="https://jax.readthedocs.io/" target="_blank" rel="noopener noreferrer">JAX/Flax Neural Network</a></p>
-        <p>TransportAPI &middot; PostgreSQL &middot; Network Rail &middot; Google Routes API</p>
+        <p>TransportAPI &middot; PostgreSQL &middot; Network Rail</p>
     </footer>
 </div>
 
@@ -744,7 +694,7 @@ async function planTrip() {
             h += '<p style="font-size:13px;color:var(--text-sec);margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">Trains for <strong style="color:var(--text)">'+dS+'</strong></p>';
             if (d.jax_prediction) {
                 var j = d.jax_prediction;
-                h += '<div class="jax-banner" style="background:'+j.color+'0c;border:1px solid '+j.color+'22" role="status"><div class="jax-badge" style="background:'+j.color+'">'+j.confidence+'</div><div class="jax-info"><h4 style="color:'+j.color+'">'+j.confidence+' Confidence</h4><p>'+(j.stress_coefficient*100).toFixed(1)+'% route stress · ±'+j.rmse+' min accuracy</p></div></div>';
+                h += '<div class="jax-banner" style="background:'+j.color+'0c;border:1px solid '+j.color+'22" role="status"><div class="jax-badge" style="background:'+j.color+'">'+j.confidence+'</div><div class="jax-info"><h4 style="color:'+j.color+'">'+j.confidence+' Confidence</h4><p>'+(j.stress_coefficient*100).toFixed(1)+'% route stress</p></div></div>';
             }
             if (!d.journeys?.length) {
                 h += '<div class="no-results" role="alert">No trains found. Try a different time.</div>';
@@ -827,7 +777,6 @@ async function checkConfidence() {
             document.getElementById('statMins').textContent=Math.round(d.predicted_minutes);
             document.getElementById('statMins').style.color=d.color;
             document.getElementById('statStress').textContent=(d.stress_coefficient*100).toFixed(1)+'%';
-            document.getElementById('statRmse').textContent='±'+d.rmse;
         } else {
             document.getElementById('confidenceScore').style.background='var(--text-dim)';
             document.getElementById('confidenceScore').textContent='—';
@@ -852,7 +801,6 @@ async function loadForecast() {
             var all=d.predictions, fc=[], ac=[];
             for (var i=0;i<all.length;i++) { if(all[i].data_type==='Forecast')fc.push(all[i]);else ac.push(all[i]); }
             if (all.length>0) {
-                document.getElementById('jaxRmse').textContent='±'+all[0].rmse;
                 document.getElementById('jaxDays').textContent=ac.length;
                 if (all[0].updated_at) { var dt=new Date(all[0].updated_at); document.getElementById('jaxUpdated').textContent=dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}); }
             }
@@ -880,167 +828,6 @@ function toHHMM(s){if(!s)return null;s=String(s).trim();if(s.indexOf('T')!==-1)s
 function formatDepTime(s){var t=toHHMM(s);return t||String(s).substring(0,5)}
 function calcDelay(std,etd){if(!std||!etd)return null;var e=String(etd).toLowerCase().trim();if(e==='on time'||e==='cancelled'||e==='delayed'||e==='n/a'||e==='no report')return null;try{var t1=toHHMM(std),t2=toHHMM(etd);if(!t1||!t2)return null;var a=t1.split(':'),b=t2.split(':');var base=new Date();base.setSeconds(0,0);var d1=new Date(base);d1.setHours(+a[0],+a[1]);var d2=new Date(base);d2.setHours(+b[0],+b[1]);var df=(d2-d1)/60000;if(df<-720)df+=1440;if(df>720)df-=1440;return df>0?Math.round(df):null}catch(x){return null}}
 function relativeTime(s){try{var t=toHHMM(s);if(!t)return'';var p=t.split(':');var d=new Date();d.setHours(+p[0],+p[1],0,0);var df=(d-new Date())/60000;if(df<-720)df+=1440;if(df<=0&&df>-2)return' <span style="color:var(--text-dim);font-size:11px">(due)</span>';if(df>0&&df<60)return' <span style="color:var(--text-dim);font-size:11px">('+Math.round(df)+'m)</span>'}catch(x){}return''}
-
-// ═══════════════════════════════════════════════════
-//  GOOGLE ROUTES + MAPS
-// ═══════════════════════════════════════════════════
-let googleMap = null;
-let directionsRenderer = null;
-let googleMapsLoaded = false;
-const GOOGLE_API_KEY = 'AIzaSyBEUwtzoIJ5VmrihqJPTbU5y6F2SPcuS_4';
-
-// Auto-load Google Maps on page ready
-window.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('googleApiKey').value = GOOGLE_API_KEY;
-    loadGoogleMapsScript(GOOGLE_API_KEY);
-});
-
-function loadGoogleMapsScript(key) {
-    const old = document.getElementById('gmaps-script');
-    if (old) old.remove();
-    const script = document.createElement('script');
-    script.id = 'gmaps-script';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=onGoogleMapsLoaded`;
-    script.async = true; script.defer = true;
-    script.onerror = () => setApiKeyStatus('err', 'Failed to load Maps — check key & billing');
-    document.head.appendChild(script);
-    setApiKeyStatus('idle', 'Loading Google Maps…');
-}
-
-function setApiKeyStatus(state, msg) {
-    const el = document.getElementById('apiKeyStatus');
-    el.className = 'api-key-status ' + state;
-    el.innerHTML = '<span>⬤</span> ' + msg;
-}
-
-function clearApiKey() {
-    loadGoogleMapsScript(GOOGLE_API_KEY);
-}
-
-function initGoogleMaps() {
-    loadGoogleMapsScript(GOOGLE_API_KEY);
-}
-
-window.onGoogleMapsLoaded = function() {
-    googleMapsLoaded = true;
-    setApiKeyStatus('ok', 'Google Maps connected');
-    document.getElementById('routeFormRow').style.display = 'flex';
-
-    // Build map
-    document.getElementById('routesMap').innerHTML = '';
-    googleMap = new google.maps.Map(document.getElementById('routesMap'), {
-        center: { lat: 52.5, lng: -1.5 },
-        zoom: 7,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: true,
-        styles: [
-            {featureType:'water',elementType:'geometry',stylers:[{color:'#c9d8e4'}]},
-            {featureType:'landscape',elementType:'geometry',stylers:[{color:'#f0ebe3'}]},
-            {featureType:'road',elementType:'geometry',stylers:[{color:'#ffffff'}]},
-            {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#faf0e6'}]},
-            {featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},
-        ]
-    });
-
-    directionsRenderer = new google.maps.DirectionsRenderer({
-        polylineOptions: { strokeColor: '#1a6b4e', strokeWeight: 5, strokeOpacity: 0.85 },
-        markerOptions: { icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#1a6b4e', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 } }
-    });
-    directionsRenderer.setMap(googleMap);
-
-    // Init autocomplete for route inputs using Google Places
-    initRouteAutocomplete('rFrom', 'crs-r-from');
-    initRouteAutocomplete('rTo',   'crs-r-to');
-
-    // Pre-fill defaults
-    document.getElementById('rFrom').value = 'Manchester Piccadilly Station';
-    document.getElementById('rTo').value   = 'London Euston Station';
-};
-
-function initRouteAutocomplete(inputId, crsBadgeId) {
-    // Use our custom autocomplete for stations, plus Google Places for free text
-    initAutocomplete(inputId, 'ac-'+inputId, crsBadgeId, null);
-}
-
-async function calcRoute() {
-    if (!googleMapsLoaded) { alert('Please connect Google Maps first.'); return; }
-
-    const fromVal = document.getElementById('rFrom').value.trim();
-    const toVal   = document.getElementById('rTo').value.trim();
-    const mode    = document.getElementById('rMode').value;
-
-    if (!fromVal || !toVal) { alert('Please enter both origin and destination.'); return; }
-
-    const key = document.getElementById('googleApiKey').value.trim();
-
-    // Use Directions Service (Maps JS API)
-    const svc = new google.maps.DirectionsService();
-    const travelMode = {
-        'DRIVE': google.maps.TravelMode.DRIVING,
-        'TRANSIT': google.maps.TravelMode.TRANSIT,
-        'WALK': google.maps.TravelMode.WALKING,
-        'BICYCLE': google.maps.TravelMode.BICYCLING
-    }[mode] || google.maps.TravelMode.DRIVING;
-
-    svc.route({
-        origin: fromVal,
-        destination: toVal,
-        travelMode,
-        unitSystem: google.maps.UnitSystem.IMPERIAL,
-        region: 'GB'
-    }, function(result, status) {
-        if (status !== 'OK') {
-            alert('Could not calculate route: ' + status + '\n\nTip: Make sure the Routes API is enabled in your Google Cloud project.');
-            return;
-        }
-
-        directionsRenderer.setDirections(result);
-
-        const leg = result.routes[0].legs[0];
-        document.getElementById('rDistance').textContent = leg.distance.text;
-        document.getElementById('rDuration').textContent = leg.duration.text;
-        document.getElementById('rLegs').textContent = leg.steps.length;
-        document.getElementById('routeSummary').style.display = 'grid';
-
-        // Steps
-        const stepsEl = document.getElementById('routeSteps');
-        stepsEl.style.display = 'block';
-        stepsEl.innerHTML = '<div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:10px">Route Steps</div>' +
-            leg.steps.map((step, i) => {
-                const instr = step.instructions.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-                return `<div class="route-step">
-                    <div class="route-step-num">${i+1}</div>
-                    <div class="route-step-text">
-                        <div>${instr}</div>
-                        <div class="route-step-dist">${step.distance.text} · ${step.duration.text}</div>
-                    </div>
-                </div>`;
-            }).join('');
-    });
-
-    // Also call Routes API (REST) for richer data, if needed
-    // This is a separate call to https://routes.googleapis.com/directions/v2:computeRoutes
-    // Uncomment and use if you need advanced features like tolls, eco routes, etc.
-    /*
-    const routesApiResp = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Goog-Api-Key': key,
-            'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.legs'
-        },
-        body: JSON.stringify({
-            origin: { address: fromVal },
-            destination: { address: toVal },
-            travelMode: mode,
-            routingPreference: mode === 'DRIVE' ? 'TRAFFIC_AWARE' : undefined,
-            units: 'IMPERIAL'
-        }    });
-    const routesData = await routesApiResp.json();
-    console.log('Routes API response:', routesData);
-    */
-}
 
 // Start forecast load
 loadForecast();
