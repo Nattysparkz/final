@@ -424,12 +424,12 @@ def index():
 
 @app.route('/api/departures/<crs>')
 def departures(crs):
-    """Return live departures filtered to corridor destinations only, excluding departed trains."""
+    """Return live departures filtered to trains that travel along the corridor."""
     crs = crs.upper()
     current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
     url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{crs}/{current_time}?numRows=20&timeWindow=60"
     headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
-    corridor_crs = set(ROUTE_STATIONS.keys())
+    corridor_crs = set(ROUTE_STATIONS.keys()) - {crs}  # other corridor stations (not the origin)
     try:
         response = requests.get(url, headers=headers, timeout=15, verify=False)
         data = response.json()
@@ -439,7 +439,7 @@ def departures(crs):
                 # Skip trains that have already departed
                 if t.get('atdSpecified', False) or t.get('atd'):
                     continue
-                # Only keep trains whose final destination is a corridor station
+                # Check if destination is a corridor station
                 dest = t.get('destination', [])
                 dest_codes = []
                 if isinstance(dest, list):
@@ -448,6 +448,12 @@ def departures(crs):
                     dest_codes = [dest.get('crs', '').upper()]
                 if any(dc in corridor_crs for dc in dest_codes):
                     filtered.append(t)
+                    continue
+                # Check if the train calls at any corridor station along the way
+                for loc in t.get('subsequentLocations', []):
+                    if isinstance(loc, dict) and loc.get('crs', '').upper() in corridor_crs and not loc.get('isPass', False):
+                        filtered.append(t)
+                        break
             data['trainServices'] = filtered
         return jsonify(data), response.status_code
     except Exception as e:
