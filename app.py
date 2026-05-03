@@ -28,10 +28,22 @@ app = Flask(__name__, template_folder='templates')
 CORS(app)
 
 # --- CONFIG ---
-API_KEY = os.environ.get("RAIL_API_KEY", "EhPYIKPzBrWdoIqeA6u1hGc54eJSCcZxiGGgGqfGSwkwuGVQ")
+API_KEY = os.environ.get("RAIL_API_KEY", "")
 DB_URL = os.environ.get("DATABASE_URL")
 REST_BASE_URL = "https://api1.raildata.org.uk/1010-live-departure-board---staff-version1_0/LDBSVWS/api/20220120"
 MANCHESTER_LINE = ['MAN', 'SPT', 'MAC', 'SOT', 'CRE', 'RUG', 'MKC', 'EUS']
+
+# Station info for the Manchester-Euston route
+ROUTE_STATIONS = {
+    'MAN': {'name': 'Manchester Piccadilly', 'crs': 'MAN', 'lat': 53.4774, 'lon': -2.2309},
+    'SPT': {'name': 'Stockport', 'crs': 'SPT', 'lat': 53.4052, 'lon': -2.1634},
+    'MAC': {'name': 'Macclesfield', 'crs': 'MAC', 'lat': 53.2586, 'lon': -2.1253},
+    'SOT': {'name': 'Stoke-on-Trent', 'crs': 'SOT', 'lat': 52.9905, 'lon': -2.1814},
+    'CRE': {'name': 'Crewe', 'crs': 'CRE', 'lat': 53.0876, 'lon': -2.4317},
+    'RUG': {'name': 'Rugby', 'crs': 'RUG', 'lat': 52.3785, 'lon': -1.2502},
+    'MKC': {'name': 'Milton Keynes Central', 'crs': 'MKC', 'lat': 52.0345, 'lon': -0.7740},
+    'EUS': {'name': 'London Euston', 'crs': 'EUS', 'lat': 51.5282, 'lon': -0.1337},
+}
 
 # --- JAX MODEL ---
 class JaxRouteModel(nn.Module):
@@ -50,7 +62,6 @@ def get_db():
     return psycopg2.connect(DB_URL)
 
 def init_db():
-    """Create prediction and live tables if they don't exist."""
     try:
         conn = get_db()
         with conn.cursor() as cur:
@@ -88,9 +99,23 @@ def init_db():
     except Exception as e:
         print(f"⚠️ Database init error: {e}")
 
+# --- HELPER: extract HH:MM from ISO datetime string ---
+def _iso_to_hhmm(iso_str):
+    """Convert '2026-04-24T12:27:00' to '12:27'. Returns '' if invalid."""
+    if not iso_str or not isinstance(iso_str, str):
+        return ''
+    try:
+        if 'T' in iso_str:
+            time_part = iso_str.split('T')[1]
+            return time_part[:5]
+        elif len(iso_str) >= 5 and ':' in iso_str:
+            return iso_str[:5]
+    except:
+        pass
+    return ''
+
 # --- LIVE API SCANNER ---
 def scan_live_departures():
-    """Scan all stations on the Manchester-Euston route and return results."""
     headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
     results = []
     total_delay = 0
@@ -128,12 +153,8 @@ def scan_live_departures():
                         total_delayed += 1
                     elif flag_lower not in ['on time', 'n/a', 'no report'] and std != 'N/A':
                         try:
-                            try:
-                                dt_std = datetime.fromisoformat(std)
-                                dt_flag = datetime.fromisoformat(flag)
-                            except ValueError:
-                                dt_std = datetime.strptime(str(std).strip()[:5], '%H:%M')
-                                dt_flag = datetime.strptime(str(flag).strip()[:5], '%H:%M')
+                            dt_std = datetime.fromisoformat(str(std))
+                            dt_flag = datetime.fromisoformat(str(flag))
                             delay = (dt_flag - dt_std).total_seconds() / 60
                             if delay < -720: delay += 1440
                             elif delay > 720: delay -= 1440
@@ -141,7 +162,17 @@ def scan_live_departures():
                                 station_delay += delay
                                 total_delayed += 1
                         except:
-                            pass
+                            try:
+                                dt_std = datetime.strptime(str(std).strip()[:5], '%H:%M')
+                                dt_flag = datetime.strptime(str(flag).strip()[:5], '%H:%M')
+                                delay = (dt_flag - dt_std).total_seconds() / 60
+                                if delay < -720: delay += 1440
+                                elif delay > 720: delay -= 1440
+                                if delay > 0:
+                                    station_delay += delay
+                                    total_delayed += 1
+                            except:
+                                pass
 
                 total_delay += station_delay
                 if station_delay > 0:
@@ -156,7 +187,6 @@ def scan_live_departures():
         results.append({'station': station, 'delay': station_delay, 'status': station_status})
         time.sleep(0.5)
 
-    # Save to database
     try:
         conn = get_db()
         with conn.cursor() as cur:
@@ -175,7 +205,6 @@ def scan_live_departures():
 
 # --- JAX TRAINING ---
 def run_jax_training():
-    """Train the JAX model and save predictions to database."""
     print("\n🧠 --- STARTING JAX TRAINING ---")
 
     try:
@@ -254,7 +283,6 @@ def run_jax_training():
             loss.block_until_ready()
             print(f"  Epoch {epoch:02d} | Loss: {loss:.6f}")
 
-    # Test
     test_data = scaled_data[training_data_len - window_size:]
     x_test = [test_data[i - window_size:i, 0] for i in range(window_size, len(test_data))]
     x_test_jnp = jnp.array(x_test).reshape(-1, window_size, 1)
@@ -264,7 +292,6 @@ def run_jax_training():
     rmse = np.sqrt(np.mean((test_predictions - y_test) ** 2))
     print(f"  RMSE: {rmse:.2f}")
 
-    # Future forecast
     future_days = 30
     future_predictions = []
     current_window = scaled_data[-window_size:]
@@ -278,7 +305,6 @@ def run_jax_training():
     last_date = daily['EVENT_DATETIME'].iloc[-1]
     future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=future_days)
 
-    # Build master table
     historical = daily[['EVENT_DATETIME', 'TOTAL_COMBINED_MINUTES']].copy()
     historical.rename(columns={'EVENT_DATETIME': 'Date', 'TOTAL_COMBINED_MINUTES': 'Minutes'}, inplace=True)
     historical['Data_Type'] = 'Actual'
@@ -289,7 +315,6 @@ def run_jax_training():
     master = pd.concat([historical, future], ignore_index=True)
     master['Stress_Coefficient'] = (master['Minutes'] / historical['Minutes'].max()).clip(upper=1.0)
 
-    # Save to database
     try:
         conn = get_db()
         with conn.cursor() as cur:
@@ -305,9 +330,8 @@ def run_jax_training():
     except Exception as e:
         print(f"⚠️ Could not save predictions: {e}")
 
-# --- DATA SCRAPER (HARVESTS LIVE DATA INTO DATABASE) ---
+# --- DATA SCRAPER ---
 def scrape_and_store():
-    """Scan all route stations and store delay data in rail_events table for future training."""
     headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
     rows_saved = 0
 
@@ -334,12 +358,8 @@ def scrape_and_store():
                         station_delay += 60
                     elif flag_lower not in ['on time', 'n/a', 'no report', 'delayed'] and std != 'N/A':
                         try:
-                            try:
-                                dt_std = datetime.fromisoformat(std)
-                                dt_flag = datetime.fromisoformat(flag)
-                            except ValueError:
-                                dt_std = datetime.strptime(str(std).strip()[:5], '%H:%M')
-                                dt_flag = datetime.strptime(str(flag).strip()[:5], '%H:%M')
+                            dt_std = datetime.fromisoformat(str(std))
+                            dt_flag = datetime.fromisoformat(str(flag))
                             delay = (dt_flag - dt_std).total_seconds() / 60
                             if delay < -720: delay += 1440
                             elif delay > 720: delay -= 1440
@@ -348,7 +368,6 @@ def scrape_and_store():
                         except:
                             pass
 
-                # Store in database
                 try:
                     conn = get_db()
                     with conn.cursor() as cur:
@@ -372,36 +391,24 @@ def scrape_and_store():
 
 # --- BACKGROUND TASKS ---
 def background_tasks():
-    """Run scraper, live scan, and JAX training on a schedule."""
-    time.sleep(5)  # Wait for app to start
-
-    # Initial run
+    time.sleep(5)
     print("📡 Scanning live departures...")
     scan_live_departures()
     print("📥 Running initial data scrape...")
     scrape_and_store()
     run_jax_training()
 
-    # Schedule:
-    # - Scrape every 60 seconds (new training data)
-    # - Update live snapshot every 5 minutes
-    # - Retrain JAX every 6 hours
     last_live = time.time()
     last_train = time.time()
 
     while True:
-        time.sleep(60)  # Every 60 seconds
+        time.sleep(60)
         try:
-            # Always scrape
             scrape_and_store()
-
-            # Live snapshot every 5 minutes
             if time.time() - last_live > 300:
                 print("📡 Refreshing live departures...")
                 scan_live_departures()
                 last_live = time.time()
-
-            # Retrain every 6 hours
             if time.time() - last_train > 21600:
                 print("🔄 Retraining JAX model with new data...")
                 run_jax_training()
@@ -417,45 +424,61 @@ def index():
 
 @app.route('/api/departures/<crs>')
 def departures(crs):
-    """Proxy to rail API for any station departure board."""
+    """Return live departures filtered to corridor destinations only, excluding departed trains."""
     crs = crs.upper()
     current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
-    url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{crs}/{current_time}?numRows=10&timeWindow=120"
+    url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{crs}/{current_time}?numRows=20&timeWindow=60"
     headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
-
+    corridor_crs = set(ROUTE_STATIONS.keys())
     try:
         response = requests.get(url, headers=headers, timeout=15, verify=False)
-        return jsonify(response.json()), response.status_code
+        data = response.json()
+        if 'trainServices' in data and data['trainServices']:
+            filtered = []
+            for t in data['trainServices']:
+                # Skip trains that have already departed
+                if t.get('atdSpecified', False) or t.get('atd'):
+                    continue
+                # Only keep trains whose final destination is a corridor station
+                dest = t.get('destination', [])
+                dest_codes = []
+                if isinstance(dest, list):
+                    dest_codes = [d.get('crs', '').upper() for d in dest if isinstance(d, dict)]
+                elif isinstance(dest, dict):
+                    dest_codes = [dest.get('crs', '').upper()]
+                if any(dc in corridor_crs for dc in dest_codes):
+                    filtered.append(t)
+            data['trainServices'] = filtered
+        return jsonify(data), response.status_code
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# --- TRANSPORTAPI JOURNEY PLANNER ---
-TRANSPORT_API_ID = os.environ.get("TRANSPORT_API_ID", "28e3461f")
-TRANSPORT_API_KEY = os.environ.get("TRANSPORT_API_KEY", "49d8c34f11b8b329e4f4c979820dca62")
-
-# Station coordinates for the Manchester-Euston route
-ROUTE_STATIONS = {
-    'MAN': {'name': 'Manchester Piccadilly', 'crs': 'MAN', 'lat': 53.4774, 'lon': -2.2309},
-    'SPT': {'name': 'Stockport', 'crs': 'SPT', 'lat': 53.4052, 'lon': -2.1634},
-    'MAC': {'name': 'Macclesfield', 'crs': 'MAC', 'lat': 53.2586, 'lon': -2.1253},
-    'SOT': {'name': 'Stoke-on-Trent', 'crs': 'SOT', 'lat': 52.9905, 'lon': -2.1814},
-    'CRE': {'name': 'Crewe', 'crs': 'CRE', 'lat': 53.0876, 'lon': -2.4317},
-    'RUG': {'name': 'Rugby', 'crs': 'RUG', 'lat': 52.3785, 'lon': -1.2502},
-    'MKC': {'name': 'Milton Keynes Central', 'crs': 'MKC', 'lat': 52.0345, 'lon': -0.7740},
-    'EUS': {'name': 'London Euston', 'crs': 'EUS', 'lat': 51.5282, 'lon': -0.1337},
-}
-
 @app.route('/api/stations')
 def stations():
-    """Return list of route stations."""
     return jsonify({'status': 'ok', 'stations': [
         {'crs': s['crs'], 'name': s['name'], 'lat': s['lat'], 'lon': s['lon']}
         for s in ROUTE_STATIONS.values()
     ]})
 
+@app.route('/api/debug/journey')
+def debug_journey():
+    from_crs = request.args.get('from', 'MAN').upper()
+    to_crs = request.args.get('to', 'EUS').upper()
+    headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
+    current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
+    url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{from_crs}/{current_time}?numRows=2&timeWindow=120&filterCrs={to_crs}&filterType=to"
+    try:
+        response = requests.get(url, headers=headers, timeout=15, verify=False)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# --- JOURNEY PLANNER (National Rail LDBSVWS with filterCrs) ---
 @app.route('/api/journey')
 def journey():
-    """Plan a journey using TransportAPI station timetables with calling_at filter."""
+    """Plan a journey using the National Rail LDBSVWS Staff API with filterCrs.
+    The Staff API returns subsequentLocations (not subsequentCallingPoints)
+    with ISO datetime strings like '2026-04-24T12:27:00'."""
     from_crs = request.args.get('from', '').upper()
     to_crs = request.args.get('to', '').upper()
     date = request.args.get('date', '')
@@ -470,91 +493,158 @@ def journey():
     from_station = ROUTE_STATIONS[from_crs]
     to_station = ROUTE_STATIONS[to_crs]
 
-    # Build datetime for the request
-    if date and time_val:
-        dt_str = f"{date}T{time_val}:00+00:00"
-    else:
-        dt_str = None
+    headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
 
-    params = {
-        'calling_at': to_crs,
-        'live': 'true',
-        'limit': '10',
-        'station_detail': 'destination,calling_at',
-        'type': 'departure',
-        'app_id': TRANSPORT_API_ID,
-        'app_key': TRANSPORT_API_KEY,
-    }
-    if dt_str:
-        params['datetime'] = dt_str
+    # Check if the requested date is beyond what the live API can provide (~1 day ahead)
+    is_future = False
+    if date:
+        try:
+            from datetime import timedelta
+            requested = datetime.strptime(date, '%Y-%m-%d').date()
+            tomorrow = (datetime.now() + timedelta(days=1)).date()
+            if requested > tomorrow:
+                is_future = True
+        except:
+            pass
+
+    # For dates too far ahead, return AI prediction only (no live train data available)
+    if is_future:
+        jax_prediction = None
+        try:
+            conn = get_db()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT predicted_minutes, stress_coefficient, rmse FROM jax_predictions WHERE forecast_date = %s", (date,))
+            row = cur.fetchone()
+            conn.close()
+            if row:
+                stress = float(row['stress_coefficient'])
+                if stress < 0.2:
+                    confidence, color = 'HIGH', '#22c55e'
+                elif stress < 0.4:
+                    confidence, color = 'GOOD', '#84cc16'
+                elif stress < 0.6:
+                    confidence, color = 'MODERATE', '#eab308'
+                elif stress < 0.8:
+                    confidence, color = 'LOW', '#f97316'
+                else:
+                    confidence, color = 'POOR', '#ef4444'
+                jax_prediction = {
+                    'predicted_minutes': round(float(row['predicted_minutes']), 1),
+                    'stress_coefficient': round(stress, 4),
+                    'rmse': round(float(row['rmse']), 2),
+                    'confidence': confidence,
+                    'color': color
+                }
+        except:
+            pass
+
+        return jsonify({
+            'status': 'ok',
+            'from': from_station,
+            'to': to_station,
+            'date': date,
+            'time': time_val,
+            'journeys': [],
+            'jax_prediction': jax_prediction,
+            'future_notice': 'Live train times are only available for today and tomorrow. The AI delay prediction for this date is shown above.',
+            'source': 'National Rail LDBWS'
+        })
+
+    # Use the user's selected date/time if provided, otherwise use now
+    if date and time_val:
+        query_time = f"{date.replace('-', '')}T{time_val.replace(':', '')}00"
+    else:
+        query_time = datetime.now().strftime("%Y%m%dT%H%M%S")
+
+    url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{from_crs}/{query_time}?numRows=10&timeWindow=120&filterCrs={to_crs}&filterType=to"
 
     try:
-        url = f"https://transportapi.com/v3/uk/train/station_timetables/crs:{from_crs}.json"
-        print(f"📍 Journey: {from_crs} → {to_crs} via station_timetables")
-        response = requests.get(url, params=params, timeout=15)
+        print(f"📍 Journey: {from_crs} → {to_crs} via LDBSVWS filterCrs")
+        response = requests.get(url, headers=headers, timeout=15, verify=False)
 
-        if response.status_code == 200:
-            data = response.json()
-            departures = data.get('departures', {}).get('all', [])
+        if response.status_code != 200:
+            return jsonify({'status': 'error', 'message': f'National Rail API returned {response.status_code}'}), 500
 
-            # Get JAX prediction for the travel date
-            jax_prediction = None
-            if date:
+        data = response.json()
+        services = data.get('trainServices', [])
+
+        # Get JAX prediction for the travel date
+        jax_prediction = None
+        if date:
+            try:
+                conn = get_db()
+                cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute("SELECT predicted_minutes, stress_coefficient, rmse FROM jax_predictions WHERE forecast_date = %s", (date,))
+                row = cur.fetchone()
+                conn.close()
+                if row:
+                    stress = float(row['stress_coefficient'])
+                    if stress < 0.2:
+                        confidence, color = 'HIGH', '#22c55e'
+                    elif stress < 0.4:
+                        confidence, color = 'GOOD', '#84cc16'
+                    elif stress < 0.6:
+                        confidence, color = 'MODERATE', '#eab308'
+                    elif stress < 0.8:
+                        confidence, color = 'LOW', '#f97316'
+                    else:
+                        confidence, color = 'POOR', '#ef4444'
+                    jax_prediction = {
+                        'predicted_minutes': round(float(row['predicted_minutes']), 1),
+                        'stress_coefficient': round(stress, 4),
+                        'rmse': round(float(row['rmse']), 2),
+                        'confidence': confidence,
+                        'color': color
+                    }
+            except:
+                pass
+
+        # Parse services into journey cards
+        is_custom_time = bool(date and time_val)
+        journeys = []
+        for train in (services or []):
+            # Skip already-departed trains only when querying current time
+            if not is_custom_time and (train.get('atdSpecified', False) or train.get('atd')):
+                continue
+
+            # Departure time: std is ISO like "2026-04-24T10:14:00"
+            std_raw = train.get('std', '')
+            dep_display = _iso_to_hhmm(std_raw)
+
+            # ETD for status
+            etd_raw = train.get('etd', '')
+            etd_display = _iso_to_hhmm(etd_raw) if etd_raw else ''
+
+            platform = train.get('platform', '-')
+            operator = train.get('operator', train.get('operatorCode', ''))
+            is_cancelled = train.get('isCancelled', False)
+
+            # Get destination name
+            dest_name = 'Unknown'
+            dest_list = train.get('destination', [])
+            if isinstance(dest_list, list) and dest_list:
+                dest_name = dest_list[0].get('locationName', 'Unknown')
+            elif isinstance(dest_list, dict):
+                dest_name = dest_list.get('locationName', 'Unknown')
+
+            # Find arrival time at destination from subsequentLocations
+            arrival_time = ''
+            subsequent = train.get('subsequentLocations', [])
+            if isinstance(subsequent, list):
+                for loc in subsequent:
+                    if isinstance(loc, dict) and loc.get('crs', '').upper() == to_crs:
+                        # Use sta (scheduled arrival), eta (estimated), or ata (actual)
+                        arr_raw = loc.get('eta', '') or loc.get('sta', '') or loc.get('ata', '')
+                        arrival_time = _iso_to_hhmm(arr_raw)
+                        break
+
+            # Calculate duration
+            duration = ''
+            if dep_display and arrival_time:
                 try:
-                    conn = get_db()
-                    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                    cur.execute("SELECT predicted_minutes, stress_coefficient, rmse FROM jax_predictions WHERE forecast_date = %s", (date,))
-                    row = cur.fetchone()
-                    conn.close()
-                    if row:
-                        stress = float(row['stress_coefficient'])
-                        if stress < 0.2:
-                            confidence, color = 'HIGH', '#22c55e'
-                        elif stress < 0.4:
-                            confidence, color = 'GOOD', '#84cc16'
-                        elif stress < 0.6:
-                            confidence, color = 'MODERATE', '#eab308'
-                        elif stress < 0.8:
-                            confidence, color = 'LOW', '#f97316'
-                        else:
-                            confidence, color = 'POOR', '#ef4444'
-                        jax_prediction = {
-                            'predicted_minutes': round(float(row['predicted_minutes']), 1),
-                            'stress_coefficient': round(stress, 4),
-                            'rmse': round(float(row['rmse']), 2),
-                            'confidence': confidence,
-                            'color': color
-                        }
-                except:
-                    pass
-
-            # Parse departures into journey cards
-            journeys = []
-            for dep in departures:
-                departure_time = dep.get('aimed_departure_time', '')
-                expected_dep = dep.get('expected_departure_time', departure_time)
-                dest_name = dep.get('destination_name', '')
-                operator = dep.get('operator_name', dep.get('operator', ''))
-                platform = dep.get('platform', '-')
-                status = dep.get('status', '')
-                train_uid = dep.get('train_uid', '')
-                service_url = dep.get('service_timetable', {}).get('id', '')
-
-                # Try to get arrival time at destination from calling_at detail
-                arrival_time = ''
-                calling_at_detail = dep.get('calling_at_detail', {})
-                if calling_at_detail:
-                    arrival_time = calling_at_detail.get('aimed_arrival_time', '')
-                    if not arrival_time:
-                        arrival_time = calling_at_detail.get('aimed_departure_time', '')
-
-                # Calculate duration if we have both times
-                duration = ''
-                if departure_time and arrival_time:
-                    try:
-                        from datetime import timedelta
-                        dep_parts = departure_time.split(':')
-                        arr_parts = arrival_time.split(':')
+                    dep_parts = dep_display.split(':')
+                    arr_parts = arrival_time.split(':')
+                    if len(dep_parts) == 2 and len(arr_parts) == 2:
                         dep_mins = int(dep_parts[0]) * 60 + int(dep_parts[1])
                         arr_mins = int(arr_parts[0]) * 60 + int(arr_parts[1])
                         if arr_mins < dep_mins:
@@ -566,80 +656,77 @@ def journey():
                             duration = f"{hours}h {mins:02d}m"
                         else:
                             duration = f"{mins}m"
-                    except:
-                        pass
+                except:
+                    pass
 
-                is_delayed = status in ['LATE', 'CANCELLED']
+            # Determine status
+            status = 'ON TIME'
+            is_delayed = False
+            if is_cancelled:
+                status = 'CANCELLED'
+                is_delayed = True
+            elif etd_raw:
+                # If atd exists, train has already departed
+                atd_raw = train.get('atd', '')
+                if atd_raw:
+                    # Compare actual vs scheduled departure
+                    atd_hhmm = _iso_to_hhmm(atd_raw)
+                    if atd_hhmm and dep_display:
+                        try:
+                            d_mins = int(dep_display.split(':')[0]) * 60 + int(dep_display.split(':')[1])
+                            a_mins = int(atd_hhmm.split(':')[0]) * 60 + int(atd_hhmm.split(':')[1])
+                            diff = a_mins - d_mins
+                            if diff > 1:
+                                status = 'LATE'
+                                is_delayed = True
+                            else:
+                                status = 'ON TIME'
+                        except:
+                            pass
+                elif etd_display and etd_display != dep_display:
+                    status = 'LATE'
+                    is_delayed = True
 
-                journeys.append({
-                    'departure': departure_time,
-                    'expected_departure': expected_dep,
+            journeys.append({
+                'departure': dep_display,
+                'expected_departure': etd_display or dep_display,
+                'arrival': arrival_time,
+                'duration': duration,
+                'destination': dest_name,
+                'operator': operator,
+                'platform': platform,
+                'status': status,
+                'train_uid': train.get('trainid', ''),
+                'is_delayed': is_delayed,
+                'legs': [{
+                    'mode': 'train',
+                    'from': from_station['name'],
+                    'to': to_station['name'],
+                    'destination': dest_name,
+                    'departure': dep_display,
                     'arrival': arrival_time,
                     'duration': duration,
-                    'destination': dest_name,
                     'operator': operator,
                     'platform': platform,
-                    'status': status,
-                    'train_uid': train_uid,
-                    'is_delayed': is_delayed,
-                    'legs': [{
-                        'mode': 'train',
-                        'from': from_station['name'],
-                        'to': to_station['name'],
-                        'destination': dest_name,
-                        'departure': departure_time,
-                        'arrival': arrival_time,
-                        'duration': duration,
-                        'operator': operator,
-                        'platform': platform,
-                    }]
-                })
-
-            return jsonify({
-                'status': 'ok',
-                'from': from_station,
-                'to': to_station,
-                'date': date,
-                'time': time_val,
-                'journeys': journeys,
-                'jax_prediction': jax_prediction,
-                'source': 'TransportAPI Station Timetables'
+                }]
             })
-        else:
-            error_body = ''
-            try:
-                error_body = response.text[:300]
-            except:
-                pass
-            return jsonify({'status': 'error', 'message': f'TransportAPI returned {response.status_code}: {error_body}'}), 500
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@app.route('/api/station_timetable/<crs>')
-def station_timetable(crs):
-    """Get live train departures from TransportAPI for a route station."""
-    crs = crs.upper()
-    if crs not in ROUTE_STATIONS:
-        return jsonify({'status': 'error', 'message': 'Station not on route.'}), 400
+        return jsonify({
+            'status': 'ok',
+            'from': from_station,
+            'to': to_station,
+            'date': date,
+            'time': time_val,
+            'journeys': journeys,
+            'jax_prediction': jax_prediction,
+            'source': 'National Rail LDBWS'
+        })
 
-    params = {
-        'live': 'true',
-        'app_id': TRANSPORT_API_ID,
-        'app_key': TRANSPORT_API_KEY,
-    }
-
-    try:
-        url = f"https://transportapi.com/v3/uk/train/station_timetables/crs:{crs}.json"
-        response = requests.get(url, params=params, timeout=15)
-        if response.status_code == 200:
-            return jsonify(response.json())
-        return jsonify({'status': 'error', 'message': f'API returned {response.status_code}'}), response.status_code
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/predictions')
 def predictions():
-    """Return all JAX predictions from the database."""
     try:
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -659,7 +746,6 @@ def predictions():
 
 @app.route('/api/live')
 def live():
-    """Return live station snapshot from the database."""
     try:
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -683,7 +769,6 @@ def live():
 
 @app.route('/api/plan/<date>')
 def plan(date):
-    """Return prediction and confidence for a specific date."""
     try:
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -733,7 +818,6 @@ def health():
 
 @app.route('/api/stats')
 def stats():
-    """Return database stats and scraper info."""
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -759,7 +843,6 @@ def stats():
 
 # --- START ---
 init_db()
-# Start background training/scanning thread
 t = threading.Thread(target=background_tasks, daemon=True)
 t.start()
 
