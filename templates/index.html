@@ -9,390 +9,100 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #efe9e0;
-            --surface: #f9f6f1;
-            --surface-2: #eae4da;
-            --surface-3: #dfd8cc;
-            --border: rgba(0,0,0,0.06);
-            --border-strong: rgba(0,0,0,0.1);
-            --text: #2c2418;
-            --text-sec: #5c5347;
-            --text-dim: #8a8179;
-            --accent: #1a6b4e;
-            --accent-hover: #145a41;
-            --accent-light: #e8f5ee;
-            --accent-text: #1a6b4e;
-            --warm: #c4956a;
-            --warm-light: #f5ebdf;
-            --green: #1a7a4e;
-            --green-bg: #edf7f1;
-            --yellow: #a67c21;
-            --yellow-bg: #fdf8ec;
-            --orange: #c4622a;
-            --red: #b93a3a;
-            --red-bg: #fdf0f0;
-            --radius: 20px;
-            --radius-sm: 12px;
-            --radius-xs: 8px;
-            --radius-full: 100px;
-            --shadow: 0 1px 3px rgba(44,36,24,0.04), 0 4px 16px rgba(44,36,24,0.03);
-            --shadow-md: 0 2px 8px rgba(44,36,24,0.06), 0 8px 24px rgba(44,36,24,0.04);
-            --shadow-lg: 0 4px 12px rgba(44,36,24,0.08), 0 16px 40px rgba(44,36,24,0.06);
-            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-        }
-
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-
-        .skip-link { position: absolute; top: -100%; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: 12px 24px; border-radius: var(--radius-sm); font-weight: 600; z-index: 9999; text-decoration: none; transition: top var(--transition); }
-        .skip-link:focus { top: 12px; }
-        :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-        :focus:not(:focus-visible) { outline: none; }
-        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-
-        .container { max-width: 960px; margin: 0 auto; padding: 48px 28px; }
-
-        /* Header */
-        .header { text-align: center; margin-bottom: 48px; }
-        .header-badge {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: var(--accent-light); padding: 7px 20px;
-            border-radius: var(--radius-full);
-            font-family: var(--font-mono); font-size: 11px; font-weight: 600;
-            color: var(--accent-text); letter-spacing: 1.5px; text-transform: uppercase;
-            margin-bottom: 20px;
-        }
-        .header-badge .pulse { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 2.5s infinite; }
-        @keyframes pulse { 0%,100%{ box-shadow: 0 0 0 0 rgba(26,122,78,0.35); } 50%{ box-shadow: 0 0 0 6px rgba(26,122,78,0); } }
-        h1 { font-size: clamp(26px, 4.5vw, 38px); font-weight: 700; letter-spacing: -0.5px; color: var(--text); margin-bottom: 8px; }
-        h1 .arrow { color: var(--warm); }
-        .subtitle { color: var(--text-dim); font-size: 15px; font-weight: 400; }
-
-        /* Tabs */
-        nav[role="tablist"] {
-            display: flex; gap: 6px; margin-bottom: 36px;
-            background: var(--surface-2); border-radius: var(--radius-full);
-            padding: 5px; max-width: 720px; margin-left: auto; margin-right: auto;
-        }
-        .tab {
-            flex: 1; padding: 10px 6px; text-align: center;
-            border-radius: var(--radius-full); font-size: 13px; font-weight: 600;
-            cursor: pointer; transition: all var(--transition);
-            color: var(--text-dim); background: none; border: none;
-            font-family: var(--font-body);
-        }
-        .tab[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
-        .tab:hover:not([aria-selected="true"]) { color: var(--text-sec); }
-
-        [role="tabpanel"] { display: none; }
-        [role="tabpanel"].active { display: block; animation: fadeUp 0.35s ease; }
-        [role="tabpanel"]:focus { outline: none; }
-
-        .card { background: var(--surface); border-radius: var(--radius); padding: 36px; margin-bottom: 24px; box-shadow: var(--shadow); }
-        .card h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-        .card .desc { color: var(--text-sec); font-size: 14px; margin-bottom: 24px; line-height: 1.75; }
-
-        /* ── Autocomplete ── */
-        label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); display: block; margin-bottom: 6px; }
-
-        .station-wrap { position: relative; flex: 1; min-width: 140px; }
-        .station-input {
-            width: 100%; padding: 11px 16px 11px 40px;
-            background: var(--surface-2); border: 1px solid transparent;
-            border-radius: var(--radius-sm); color: var(--text);
-            font-family: var(--font-body); font-size: 14px; font-weight: 500;
-            outline: none; transition: all var(--transition);
-        }
-        .station-input:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px rgba(26,107,78,0.1); }
-        .station-icon {
-            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-            font-size: 14px; pointer-events: none; line-height: 1;
-        }
-        .station-crs {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            font-family: var(--font-mono); font-size: 10px; font-weight: 700;
-            color: var(--warm); background: var(--warm-light); padding: 2px 7px;
-            border-radius: 6px; pointer-events: none; letter-spacing: 1px;
-            opacity: 0; transition: opacity var(--transition);
-        }
-        .station-crs.visible { opacity: 1; }
-
-        .autocomplete-dropdown {
-            position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 200;
-            background: var(--surface); border-radius: var(--radius-sm);
-            box-shadow: var(--shadow-lg); border: 1px solid var(--border-strong);
-            max-height: 260px; overflow-y: auto; display: none;
-        }
-        .autocomplete-dropdown.open { display: block; animation: fadeUp 0.18s ease; }
-        .ac-item {
-            display: flex; align-items: center; gap: 12px;
-            padding: 11px 16px; cursor: pointer; transition: background var(--transition);
-        }
-        .ac-item:hover, .ac-item.focused { background: var(--surface-2); }
-        .ac-item .ac-name { font-size: 14px; font-weight: 500; flex: 1; }
-        .ac-item .ac-name mark { background: none; color: var(--accent); font-weight: 700; }
-        .ac-item .ac-crs { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--warm); background: var(--warm-light); padding: 2px 6px; border-radius: 5px; }
-        .ac-item .ac-region { font-size: 11px; color: var(--text-dim); }
-        .ac-no-results { padding: 16px; text-align: center; color: var(--text-dim); font-size: 13px; }
-
-        /* Standard inputs */
-        select, input[type="date"], input[type="time"], input[type="text"] {
-            width: 100%; padding: 11px 16px;
-            background: var(--surface-2); border: 1px solid transparent;
-            border-radius: var(--radius-sm); color: var(--text);
-            font-family: var(--font-body); font-size: 14px; font-weight: 500;
-            outline: none; appearance: none; transition: all var(--transition);
-        }
-        select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8179' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; }
-        select:focus, input:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px rgba(26,107,78,0.1); }
-
-        .btn { padding: 11px 28px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-full); font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; transition: all var(--transition); white-space: nowrap; }
-        .btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26,107,78,0.2); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-secondary { background: var(--surface-2); color: var(--text); }
-        .btn-secondary:hover:not(:disabled) { background: var(--surface-3); box-shadow: none; }
-        .swap-btn { background: var(--surface-2); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: var(--text-dim); transition: all var(--transition); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-        .swap-btn:hover { background: var(--surface-3); color: var(--accent); }
-
-        .form-row { display: flex; gap: 14px; align-items: end; margin-bottom: 24px; flex-wrap: wrap; }
-        .form-row .field { flex: 1; min-width: 140px; }
-
-        .clock-box { display: flex; align-items: center; gap: 20px; padding: 16px 22px; background: var(--warm-light); border-radius: var(--radius); margin-bottom: 24px; }
-        .live-clock { font-family: var(--font-mono); font-size: 24px; font-weight: 700; color: var(--warm); letter-spacing: 2px; }
-        .live-date-display { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
-
-        .info-box { background: var(--surface-2); border-radius: var(--radius-sm); padding: 16px 20px; margin-bottom: 20px; font-size: 13px; color: var(--text-sec); line-height: 1.8; }
-        .info-box strong { color: var(--text); }
-
-        /* ── Route panel ── */
-        .api-key-bar {
-            display: flex; gap: 10px; align-items: end; margin-bottom: 20px;
-        }
-        .api-key-bar .field { flex: 1; }
-        .api-key-bar input { font-family: var(--font-mono); font-size: 13px; }
-        .api-key-status {
-            display: inline-flex; align-items: center; gap: 7px;
-            font-size: 12px; font-weight: 600; padding: 5px 12px;
-            border-radius: var(--radius-full); margin-bottom: 16px;
-        }
-        .api-key-status.ok { background: var(--green-bg); color: var(--green); }
-        .api-key-status.err { background: var(--red-bg); color: var(--red); }
-        .api-key-status.idle { background: var(--surface-2); color: var(--text-dim); }
-
-        #routesMap {
-            width: 100%; height: 440px; border-radius: var(--radius);
-            background: var(--surface-2); overflow: hidden;
-            border: 1px solid var(--border-strong);
-            position: relative;
-        }
-        #routesMap .map-placeholder {
-            position: absolute; inset: 0; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; gap: 10px;
-            color: var(--text-dim); font-size: 14px; text-align: center; padding: 24px;
-        }
-        #routesMap .map-placeholder .map-icon { font-size: 40px; }
-
-        .route-summary {
-            display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 18px;
-        }
-        .route-stat { background: var(--surface-2); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
-        .route-stat-val { font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--accent); }
-        .route-stat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); font-weight: 600; margin-top: 3px; }
-
-        .route-steps { margin-top: 18px; }
-        .route-step { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-        .route-step:last-child { border-bottom: none; }
-        .route-step-num { width: 26px; height: 26px; background: var(--accent-light); color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
-        .route-step-text { flex: 1; color: var(--text-sec); line-height: 1.6; }
-        .route-step-text strong { color: var(--text); }
-        .route-step-dist { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); white-space: nowrap; margin-top: 2px; }
-
-        /* Departure board */
-        .board-controls { display: flex; gap: 12px; align-items: end; margin-bottom: 22px; }
-        .board-controls input { width: 90px; font-family: var(--font-mono); font-size: 16px; text-transform: uppercase; text-align: center; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); background: var(--surface-2); }
-        th:first-child { border-radius: var(--radius-xs) 0 0 var(--radius-xs); }
-        th:last-child { border-radius: 0 var(--radius-xs) var(--radius-xs) 0; }
-        td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--border); }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: var(--surface-2); }
-        .late { color: var(--red); font-weight: 600; }
-        .ontime { color: var(--green); font-weight: 600; }
-        .cancelled { color: var(--red); font-weight: 700; text-decoration: line-through; }
-
-        .journey-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 14px; transition: all var(--transition); }
-        .journey-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-        .journey-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .journey-time { font-family: var(--font-mono); font-size: 20px; font-weight: 700; }
-        .journey-duration { font-size: 13px; color: var(--text-sec); background: var(--surface-2); padding: 5px 14px; border-radius: var(--radius-full); font-weight: 500; }
-        .journey-arrow { color: var(--warm); margin: 0 8px; font-weight: 400; }
-        .journey-legs { border-top: 1px solid var(--border); padding-top: 14px; }
-        .leg { display: flex; align-items: center; gap: 14px; padding: 8px 0; font-size: 13px; }
-        .leg-icon { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
-        .leg-icon.train { background: var(--accent-light); }
-        .leg-icon.foot { background: var(--green-bg); }
-        .leg-details { flex: 1; }
-        .leg-details .leg-route { font-weight: 600; }
-        .leg-details .leg-time { color: var(--text-dim); font-family: var(--font-mono); font-size: 12px; margin-top: 3px; }
-
-        .jax-banner { display: flex; align-items: center; gap: 18px; padding: 20px; border-radius: var(--radius); margin-bottom: 18px; }
-        .jax-badge { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; letter-spacing: 0.5px; }
-        .jax-info h4 { font-size: 15px; margin-bottom: 2px; font-weight: 600; }
-        .jax-info p { font-size: 12px; color: var(--text-sec); line-height: 1.5; }
-
-        .confidence-banner { display: flex; align-items: center; gap: 22px; padding: 26px; border-radius: var(--radius); margin-bottom: 22px; }
-        .confidence-score { width: 68px; height: 68px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
-        .confidence-details h3 { font-size: 17px; margin-bottom: 4px; font-weight: 700; }
-        .confidence-details p { font-size: 14px; color: var(--text-sec); line-height: 1.65; }
-        .result { display: none; padding-top: 24px; }
-        .result.visible { display: block; animation: fadeUp 0.35s ease; }
-        .result-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-
-        .stat-card { background: var(--surface-2); border-radius: var(--radius); padding: 20px; text-align: center; }
-        .stat-value { font-family: var(--font-mono); font-size: 26px; font-weight: 700; margin-bottom: 4px; }
-        .stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
-        .metric-hint { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
-
-        .jax-status { display: flex; gap: 14px; margin-bottom: 24px; }
-        .jax-status .stat-card { flex: 1; }
-        .forecast-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
-        .forecast-day { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 12px; text-align: center; transition: all var(--transition); cursor: pointer; }
-        .forecast-day:hover, .forecast-day:focus-visible { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }
-        .forecast-date { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; }
-        .forecast-mins { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-        .forecast-stress { font-size: 10px; font-family: var(--font-mono); font-weight: 500; }
-        .stress-bar { height: 4px; border-radius: 4px; margin-top: 10px; background: var(--surface-3); overflow: hidden; }
-        .stress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
-        .stress-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
-        .stress-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-sec); }
-        .stress-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-
-        .loading-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--surface-3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 6px; vertical-align: middle; }
-        .no-results { text-align: center; padding: 44px 20px; color: var(--text-dim); font-size: 14px; }
-
-        .footer { text-align: center; padding: 44px 0 24px; color: var(--text-dim); font-size: 12px; line-height: 1.8; }
-        .footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
-        .footer a:hover { text-decoration: underline; }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-        @media (max-width: 768px) {
-            .form-row, .board-controls, .api-key-bar { flex-direction: column; }
-            .result-stats, .jax-status, .route-summary { grid-template-columns: 1fr; }
-            nav[role="tablist"] { flex-wrap: wrap; border-radius: var(--radius); }
-            .tab { border-radius: var(--radius-sm); }
-            .forecast-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
-            .clock-box, .confidence-banner, .jax-banner { flex-direction: column; text-align: center; }
-            .card { padding: 24px; }
-            .container { padding: 28px 16px; }
-        }
-        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+        :root{--bg:#efe9e0;--surface:#f9f6f1;--surface-2:#eae4da;--surface-3:#dfd8cc;--border:rgba(0,0,0,0.06);--border-strong:rgba(0,0,0,0.1);--text:#2c2418;--text-sec:#5c5347;--text-dim:#8a8179;--accent:#1a6b4e;--accent-hover:#145a41;--accent-light:#e8f5ee;--accent-text:#1a6b4e;--warm:#c4956a;--warm-light:#f5ebdf;--green:#1a7a4e;--green-bg:#edf7f1;--yellow:#a67c21;--orange:#c4622a;--red:#b93a3a;--radius:20px;--radius-sm:12px;--radius-xs:8px;--radius-full:100px;--shadow:0 1px 3px rgba(44,36,24,0.04),0 4px 16px rgba(44,36,24,0.03);--shadow-md:0 2px 8px rgba(44,36,24,0.06),0 8px 24px rgba(44,36,24,0.04);--transition:0.25s cubic-bezier(0.4,0,0.2,1);--font-body:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;--font-mono:'JetBrains Mono',monospace}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased}
+        .container{max-width:960px;margin:0 auto;padding:48px 28px}
+        .header{text-align:center;margin-bottom:48px}
+        h1{font-size:clamp(26px,4.5vw,38px);font-weight:700;letter-spacing:-0.5px;color:var(--text);margin-bottom:8px}h1 .arrow{color:var(--warm)}
+        .subtitle{color:var(--text-dim);font-size:15px;font-weight:400}
+        nav[role="tablist"]{display:flex;gap:6px;margin-bottom:36px;background:var(--surface-2);border-radius:var(--radius-full);padding:5px;max-width:640px;margin-left:auto;margin-right:auto}
+        .tab{flex:1;padding:10px 6px;text-align:center;border-radius:var(--radius-full);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--transition);color:var(--text-dim);background:none;border:none;font-family:var(--font-body)}
+        .tab[aria-selected="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}.tab:hover:not([aria-selected="true"]){color:var(--text-sec)}
+        [role="tabpanel"]{display:none}[role="tabpanel"].active{display:block;animation:fadeUp 0.35s ease}
+        .card{background:var(--surface);border-radius:var(--radius);padding:36px;margin-bottom:24px;box-shadow:var(--shadow)}.card h2{font-size:20px;font-weight:700;margin-bottom:6px}.card .desc{color:var(--text-sec);font-size:14px;margin-bottom:24px;line-height:1.75}
+        label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);display:block;margin-bottom:6px}
+        select,input[type="date"],input[type="time"]{width:100%;padding:11px 16px;background:var(--surface-2);border:1px solid transparent;border-radius:var(--radius-sm);color:var(--text);font-family:var(--font-body);font-size:14px;font-weight:500;outline:none;appearance:none;transition:all var(--transition)}
+        select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8179' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+        select:focus,input:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(26,107,78,0.1)}
+        .btn{padding:11px 28px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-full);font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;transition:all var(--transition);white-space:nowrap}
+        .btn:hover:not(:disabled){background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 4px 14px rgba(26,107,78,0.2)}.btn:disabled{opacity:0.5;cursor:not-allowed}
+        .swap-btn{background:var(--surface-2);border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;color:var(--text-dim);transition:all var(--transition);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}.swap-btn:hover{background:var(--surface-3);color:var(--accent)}
+        .form-row{display:flex;gap:14px;align-items:end;margin-bottom:24px;flex-wrap:wrap}.form-row .field{flex:1;min-width:140px}
+        .clock-box{display:flex;align-items:center;gap:20px;padding:16px 22px;background:var(--warm-light);border-radius:var(--radius);margin-bottom:24px}
+        .live-clock{font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--warm);letter-spacing:2px}.live-date-display{font-size:12px;color:var(--text-dim);margin-top:2px}
+        .info-box{background:var(--surface-2);border-radius:var(--radius-sm);padding:16px 20px;margin-bottom:20px;font-size:13px;color:var(--text-sec);line-height:1.8}.info-box strong{color:var(--text)}
+        .board-controls{display:flex;gap:12px;align-items:end;margin-bottom:22px}
+        table{width:100%;border-collapse:separate;border-spacing:0}th{padding:12px 16px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);background:var(--surface-2)}th:first-child{border-radius:var(--radius-xs) 0 0 var(--radius-xs)}th:last-child{border-radius:0 var(--radius-xs) var(--radius-xs) 0}td{padding:14px 16px;font-size:14px;border-bottom:1px solid var(--border)}tr:last-child td{border-bottom:none}tr:hover td{background:var(--surface-2)}
+        .late{color:var(--red);font-weight:600}.ontime{color:var(--green);font-weight:600}.cancelled{color:var(--red);font-weight:700;text-decoration:line-through}
+        .journey-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:14px;transition:all var(--transition)}.journey-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+        .journey-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.journey-time{font-family:var(--font-mono);font-size:20px;font-weight:700}.journey-duration{font-size:13px;color:var(--text-sec);background:var(--surface-2);padding:5px 14px;border-radius:var(--radius-full);font-weight:500}.journey-arrow{color:var(--warm);margin:0 8px;font-weight:400}
+        .journey-legs{border-top:1px solid var(--border);padding-top:14px}.leg{display:flex;align-items:center;gap:14px;padding:8px 0;font-size:13px}.leg-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}.leg-icon.train{background:var(--accent-light)}.leg-details{flex:1}.leg-details .leg-route{font-weight:600}.leg-details .leg-time{color:var(--text-dim);font-family:var(--font-mono);font-size:12px;margin-top:3px}
+        .jax-banner{display:flex;align-items:center;gap:18px;padding:20px;border-radius:var(--radius);margin-bottom:18px}.jax-badge{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:0.5px}.jax-info h4{font-size:15px;margin-bottom:2px;font-weight:600}.jax-info p{font-size:12px;color:var(--text-sec);line-height:1.5}
+        .confidence-banner{display:flex;align-items:center;gap:22px;padding:26px;border-radius:var(--radius);margin-bottom:22px}.confidence-score{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;font-weight:700;color:#fff;flex-shrink:0}.confidence-details h3{font-size:17px;margin-bottom:4px;font-weight:700}.confidence-details p{font-size:14px;color:var(--text-sec);line-height:1.65}
+        .result{display:none;padding-top:24px}.result.visible{display:block;animation:fadeUp 0.35s ease}.result-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+        .stat-card{background:var(--surface-2);border-radius:var(--radius);padding:20px;text-align:center}.stat-value{font-family:var(--font-mono);font-size:26px;font-weight:700;margin-bottom:4px}.stat-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;font-weight:600}.metric-hint{font-size:11px;color:var(--text-dim);margin-top:6px}
+        .jax-status{display:flex;gap:14px;margin-bottom:24px}.jax-status .stat-card{flex:1}
+        .forecast-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+        .forecast-day{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 12px;text-align:center;transition:all var(--transition);cursor:pointer}.forecast-day:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:var(--border-strong)}
+        .forecast-date{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-bottom:8px;font-weight:600}.forecast-mins{font-size:22px;font-weight:700;margin-bottom:4px}.forecast-stress{font-size:10px;font-family:var(--font-mono);font-weight:500}
+        .stress-bar{height:4px;border-radius:4px;margin-top:10px;background:var(--surface-3);overflow:hidden}.stress-bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+        .stress-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}.stress-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-sec)}.stress-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+        .loading-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--surface-3);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;vertical-align:middle}
+        .no-results{text-align:center;padding:44px 20px;color:var(--text-dim);font-size:14px}
+        .footer{text-align:center;padding:44px 0 24px;color:var(--text-dim);font-size:12px;line-height:1.8}
+        .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+        @keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @media(max-width:768px){.form-row,.board-controls{flex-direction:column}.result-stats,.jax-status{grid-template-columns:1fr}nav[role="tablist"]{flex-wrap:wrap;border-radius:var(--radius)}.tab{border-radius:var(--radius-sm)}.forecast-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}.clock-box,.confidence-banner,.jax-banner{flex-direction:column;text-align:center}.card{padding:24px}.container{padding:28px 16px}}
     </style>
 </head>
 <body>
-<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="container">
-    <header class="header" role="banner">
-        <div class="header-badge"><span class="pulse" aria-hidden="true"></span>JAX Neural Network &middot; Live</div>
-        <h1>Manchester <span class="arrow" aria-hidden="true">&rarr;</span><span class="sr-only">to</span> Euston</h1>
+    <header class="header">
+        <h1>Manchester <span class="arrow">&rarr;</span><span class="sr-only">to</span> Euston</h1>
         <p class="subtitle">AI-powered delay prediction &middot; Journey planner &middot; Live departures</p>
     </header>
-
     <nav role="tablist" aria-label="Main navigation">
-        <button class="tab" role="tab" aria-selected="true"  aria-controls="tab-planner"    id="btn-planner"    onclick="switchTab('planner')">Journey Planner</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-board"      id="btn-board"      onclick="switchTab('board')">Departures</button>
+        <button class="tab" role="tab" aria-selected="true" aria-controls="tab-planner" id="btn-planner" onclick="switchTab('planner')">Journey Planner</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-board" id="btn-board" onclick="switchTab('board')">Departures</button>
         <button class="tab" role="tab" aria-selected="false" aria-controls="tab-confidence" id="btn-confidence" onclick="switchTab('confidence')">AI Confidence</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-forecast"   id="btn-forecast"   onclick="switchTab('forecast')">30-Day Forecast</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-forecast" id="btn-forecast" onclick="switchTab('forecast')">30-Day Forecast</button>
     </nav>
-
     <main id="main-content">
-
-        <!-- ── JOURNEY PLANNER ── -->
         <section role="tabpanel" class="active" id="tab-planner" aria-labelledby="btn-planner" tabindex="0">
             <div class="card">
                 <h2>Journey Planner</h2>
-                <p class="desc">Find trains between any UK station. Start typing a station name for suggestions &mdash; the AI model will show a delay confidence score for your chosen date.</p>
-                <div class="clock-box" role="timer" aria-label="Current time">
-                    <div>
-                        <div class="live-clock" id="liveClock">--:--:--</div>
-                        <div class="live-date-display" id="liveDate">Loading...</div>
-                    </div>
-                    <div style="font-size:12px;color:var(--text-dim);line-height:1.7">Current local time<br><span style="color:var(--warm)">Auto-filled below</span></div>
-                </div>
+                <p class="desc">Find trains between stations on the Manchester&ndash;London Euston corridor.</p>
+                <div class="clock-box"><div><div class="live-clock" id="liveClock">--:--:--</div><div class="live-date-display" id="liveDate">Loading...</div></div><div style="font-size:12px;color:var(--text-dim);line-height:1.7">Current local time<br><span style="color:var(--warm)">Auto-filled below</span></div></div>
                 <div class="form-row">
-                    <div class="station-wrap" id="wrap-from">
-                        <label for="jpFrom">From</label>
-                        <span class="station-icon" aria-hidden="true">🚉</span>
-                        <input type="text" class="station-input" id="jpFrom" autocomplete="off" placeholder="e.g. Manchester Piccadilly" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded="false" aria-controls="ac-from">
-                        <span class="station-crs" id="crs-from" aria-live="polite"></span>
-                        <div class="autocomplete-dropdown" id="ac-from" role="listbox" aria-label="Station suggestions"></div>
-                    </div>
-                    <button class="swap-btn" onclick="swapStations()" aria-label="Swap origin and destination" style="margin-top:22px">&#8660;</button>
-                    <div class="station-wrap" id="wrap-to">
-                        <label for="jpTo">To</label>
-                        <span class="station-icon" aria-hidden="true">🏁</span>
-                        <input type="text" class="station-input" id="jpTo" autocomplete="off" placeholder="e.g. London Euston" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded="false" aria-controls="ac-to">
-                        <span class="station-crs" id="crs-to" aria-live="polite"></span>
-                        <div class="autocomplete-dropdown" id="ac-to" role="listbox" aria-label="Station suggestions"></div>
-                    </div>
+                    <div class="field"><label for="jpFrom">From</label><select id="jpFrom"><option value="MAN">Manchester Piccadilly</option><option value="SPT">Stockport</option><option value="MAC">Macclesfield</option><option value="SOT">Stoke-on-Trent</option><option value="CRE">Crewe</option><option value="RUG">Rugby</option><option value="MKC">Milton Keynes Central</option><option value="EUS">London Euston</option></select></div>
+                    <button class="swap-btn" onclick="swapStations()" aria-label="Swap origin and destination">&#8660;</button>
+                    <div class="field"><label for="jpTo">To</label><select id="jpTo"><option value="MAN">Manchester Piccadilly</option><option value="SPT">Stockport</option><option value="MAC">Macclesfield</option><option value="SOT">Stoke-on-Trent</option><option value="CRE">Crewe</option><option value="RUG">Rugby</option><option value="MKC">Milton Keynes Central</option><option value="EUS" selected>London Euston</option></select></div>
                     <div class="field"><label for="jpDate">Date</label><input type="date" id="jpDate"></div>
                     <div class="field"><label for="jpTime">Time</label><input type="time" id="jpTime"></div>
-                    <button class="btn" id="jpBtn" onclick="planTrip()" style="margin-top:22px">Find Trains</button>
+                    <button class="btn" id="jpBtn" onclick="planTrip()">Find Trains</button>
                 </div>
-                <div id="jpResults" role="region" aria-live="polite" aria-label="Journey results"></div>
+                <div id="jpResults" role="region" aria-live="polite"></div>
             </div>
         </section>
-
-        <!-- ── DEPARTURES ── -->
         <section role="tabpanel" id="tab-board" aria-labelledby="btn-board" tabindex="0">
             <div class="card">
                 <h2>Live Departure Board</h2>
-                <p class="desc">View real-time departures for Manchester to London Euston corridor stations.</p>
+                <p class="desc">Real-time departures for the Manchester&ndash;London Euston corridor.</p>
                 <div class="board-controls">
-                    <div><label for="crsInput">Station</label>
-                        <select id="crsInput">
-                            <option value="MAN">Manchester Piccadilly</option>
-                            <option value="SPT">Stockport</option>
-                            <option value="MAC">Macclesfield</option>
-                            <option value="SOT">Stoke-on-Trent</option>
-                            <option value="CRE">Crewe</option>
-                            <option value="RUG">Rugby</option>
-                            <option value="MKC">Milton Keynes Central</option>
-                            <option value="EUS">London Euston</option>
-                        </select>
-                    </div>
+                    <div class="field"><label for="crsSelect">Station</label><select id="crsSelect"><option value="MAN">Manchester Piccadilly</option><option value="SPT">Stockport</option><option value="MAC">Macclesfield</option><option value="SOT">Stoke-on-Trent</option><option value="CRE">Crewe</option><option value="RUG">Rugby</option><option value="MKC">Milton Keynes Central</option><option value="EUS">London Euston</option></select></div>
                     <button class="btn" onclick="getBoard()">Load Board</button>
                 </div>
-                <div role="region" aria-live="polite">
-                    <table id="boardTable" aria-label="Departure board">
-                        <thead><tr><th scope="col">Time</th><th scope="col">Destination</th><th scope="col">Platform</th><th scope="col">Status</th><th scope="col">Operator</th></tr></thead>
-                        <tbody><tr><td colspan="5" style="color:var(--text-dim)">Enter a station code and click Load Board…</td></tr></tbody>
-                    </table>
-                </div>
+                <table id="boardTable"><thead><tr><th>Time</th><th>Destination</th><th>Platform</th><th>Status</th><th>Operator</th></tr></thead><tbody><tr><td colspan="5" style="color:var(--text-dim)">Select a station and click Load Board&hellip;</td></tr></tbody></table>
             </div>
         </section>
-
-        <!-- ── AI CONFIDENCE ── -->
         <section role="tabpanel" id="tab-confidence" aria-labelledby="btn-confidence" tabindex="0">
             <div class="card">
                 <h2>AI Delay Confidence</h2>
-                <p class="desc">Get the JAX neural network's delay prediction and travel confidence for any date.</p>
-                <div class="info-box" role="note"><strong>Predicted Delay</strong> — estimated delay minutes. <strong>Stress Coefficient</strong> — 0–100% route pressure.</div>
-                <div class="form-row">
-                    <div class="field"><label for="travelDate">Travel Date</label><input type="date" id="travelDate"></div>
-                    <button class="btn" onclick="checkConfidence()">Check Forecast</button>
-                </div>
-                <div class="result" id="result" role="region" aria-live="polite">
-                    <div class="confidence-banner" id="confidenceBanner">
-                        <div class="confidence-score" id="confidenceScore">--</div>
-                        <div class="confidence-details"><h3 id="confidenceTitle">Checking…</h3><p id="confidenceText">Analysing route conditions…</p></div>
-                    </div>
+                <p class="desc">Get the AI model's delay prediction and travel confidence for any date.</p>
+                <div class="info-box"><strong>Predicted Delay</strong> &mdash; estimated delay minutes. <strong>Stress Coefficient</strong> &mdash; 0&ndash;100% route pressure.</div>
+                <div class="form-row"><div class="field"><label for="travelDate">Travel Date</label><input type="date" id="travelDate"></div><button class="btn" onclick="checkConfidence()">Check Forecast</button></div>
+                <div class="result" id="result">
+                    <div class="confidence-banner" id="confidenceBanner"><div class="confidence-score" id="confidenceScore">--</div><div class="confidence-details"><h3 id="confidenceTitle">Checking&hellip;</h3><p id="confidenceText">Analysing route conditions&hellip;</p></div></div>
                     <div class="result-stats">
                         <div class="stat-card"><div class="stat-value" id="statMins">--</div><div class="stat-label">Predicted Delay</div><div class="metric-hint">Minutes of expected delay</div></div>
                         <div class="stat-card"><div class="stat-value" id="statStress">--</div><div class="stat-label">Stress Coefficient</div><div class="metric-hint">Above 60% is high risk</div></div>
@@ -400,450 +110,38 @@
                 </div>
             </div>
         </section>
-
-        <!-- ── 30-DAY FORECAST ── -->
         <section role="tabpanel" id="tab-forecast" aria-labelledby="btn-forecast" tabindex="0">
             <div class="card">
                 <h2>30-Day Forecast</h2>
                 <p class="desc">Predicted delay and route stress for the next 30 days. Click any day for full analysis.</p>
-                <div class="info-box" role="note">
-                    <div class="stress-legend" role="list">
-                        <span class="stress-legend-item" role="listitem"><span class="stress-dot" style="background:#1a7a4e"></span>Low</span>
-                        <span class="stress-legend-item" role="listitem"><span class="stress-dot" style="background:#65a30d"></span>Moderate</span>
-                        <span class="stress-legend-item" role="listitem"><span class="stress-dot" style="background:#a67c21"></span>Elevated</span>
-                        <span class="stress-legend-item" role="listitem"><span class="stress-dot" style="background:#c4622a"></span>High</span>
-                        <span class="stress-legend-item" role="listitem"><span class="stress-dot" style="background:#b93a3a"></span>Critical</span>
-                    </div>
-                </div>
-                <div class="jax-status">
-                    <div class="stat-card"><div class="stat-value" id="jaxDays">--</div><div class="stat-label">Training Days</div></div>
-                    <div class="stat-card"><div class="stat-value" id="jaxUpdated">--</div><div class="stat-label">Last Updated</div></div>
-                </div>
-                <div class="forecast-grid" id="forecastGrid" role="region" aria-live="polite">
-                    <div class="no-results"><span class="loading-spinner" aria-hidden="true"></span> Loading forecast…</div>
-                </div>
+                <div class="info-box"><div class="stress-legend"><span class="stress-legend-item"><span class="stress-dot" style="background:#1a7a4e"></span>Low</span><span class="stress-legend-item"><span class="stress-dot" style="background:#65a30d"></span>Moderate</span><span class="stress-legend-item"><span class="stress-dot" style="background:#a67c21"></span>Elevated</span><span class="stress-legend-item"><span class="stress-dot" style="background:#c4622a"></span>High</span><span class="stress-legend-item"><span class="stress-dot" style="background:#b93a3a"></span>Critical</span></div></div>
+                <div class="jax-status"><div class="stat-card"><div class="stat-value" id="jaxDays">--</div><div class="stat-label">Training Days</div></div><div class="stat-card"><div class="stat-value" id="jaxUpdated">--</div><div class="stat-label">Last Updated</div></div></div>
+                <div class="forecast-grid" id="forecastGrid"><div class="no-results"><span class="loading-spinner"></span> Loading forecast&hellip;</div></div>
             </div>
         </section>
-
     </main>
-    <footer class="footer" role="contentinfo">
-        <p>TrainJAX &middot; Powered by <a href="https://jax.readthedocs.io/" target="_blank" rel="noopener noreferrer">JAX/Flax Neural Network</a></p>
-        <p>TransportAPI &middot; PostgreSQL &middot; Network Rail</p>
-    </footer>
+    <footer class="footer"><p>TrainJAX &middot; AI-Powered Delay Prediction</p><p>PostgreSQL &middot; National Rail LDBWS</p></footer>
 </div>
-
 <script>
-// ═══════════════════════════════════════════════════
-//  UK STATION DATABASE (CRS codes + coordinates)
-// ═══════════════════════════════════════════════════
-const UK_STATIONS = [
-  {n:'Manchester Piccadilly',c:'MAN',r:'Greater Manchester',lat:53.4773,lng:-2.2309},
-  {n:'Manchester Victoria',c:'MCV',r:'Greater Manchester',lat:53.4872,lng:-2.2414},
-  {n:'Manchester Airport',c:'MIA',r:'Greater Manchester',lat:53.3654,lng:-2.2728},
-  {n:'Stockport',c:'SPT',r:'Greater Manchester',lat:53.4074,lng:-2.1595},
-  {n:'Macclesfield',c:'MAC',r:'Cheshire',lat:53.2588,lng:-2.1243},
-  {n:'Stoke-on-Trent',c:'SOT',r:'Staffordshire',lat:53.0009,lng:-2.1794},
-  {n:'Crewe',c:'CRE',r:'Cheshire',lat:53.0883,lng:-2.4320},
-  {n:'Stafford',c:'STA',r:'Staffordshire',lat:52.8046,lng:-2.1217},
-  {n:'Wolverhampton',c:'WVH',r:'West Midlands',lat:52.5900,lng:-2.1218},
-  {n:'Birmingham New Street',c:'BHM',r:'West Midlands',lat:52.4778,lng:-1.9002},
-  {n:'Birmingham International',c:'BHI',r:'West Midlands',lat:52.4508,lng:-1.7264},
-  {n:'Rugby',c:'RUG',r:'Warwickshire',lat:52.3709,lng:-1.2516},
-  {n:'Coventry',c:'COV',r:'West Midlands',lat:52.4005,lng:-1.5098},
-  {n:'Milton Keynes Central',c:'MKC',r:'Buckinghamshire',lat:52.0330,lng:-0.7741},
-  {n:'Watford Junction',c:'WFJ',r:'Hertfordshire',lat:51.6632,lng:-0.3963},
-  {n:'London Euston',c:'EUS',r:'London',lat:51.5284,lng:-0.1332},
-  {n:'London Paddington',c:'PAD',r:'London',lat:51.5154,lng:-0.1755},
-  {n:'London Kings Cross',c:'KGX',r:'London',lat:51.5308,lng:-0.1238},
-  {n:'London St Pancras',c:'STP',r:'London',lat:51.5321,lng:-0.1234},
-  {n:'London Waterloo',c:'WAT',r:'London',lat:51.5031,lng:-0.1132},
-  {n:'London Victoria',c:'VIC',r:'London',lat:51.4952,lng:-0.1441},
-  {n:'London Liverpool Street',c:'LST',r:'London',lat:51.5179,lng:-0.0817},
-  {n:'London Bridge',c:'LBG',r:'London',lat:51.5047,lng:-0.0862},
-  {n:'Leeds',c:'LDS',r:'Yorkshire',lat:53.7957,lng:-1.5490},
-  {n:'York',c:'YRK',r:'Yorkshire',lat:53.9581,lng:-1.0931},
-  {n:'Sheffield',c:'SHF',r:'Yorkshire',lat:53.3779,lng:-1.4625},
-  {n:'Doncaster',c:'DON',r:'Yorkshire',lat:53.5221,lng:-1.1388},
-  {n:'Newcastle',c:'NCL',r:'Tyne and Wear',lat:54.9681,lng:-1.6174},
-  {n:'Edinburgh Waverley',c:'EDB',r:'Scotland',lat:55.9521,lng:-3.1892},
-  {n:'Glasgow Central',c:'GLC',r:'Scotland',lat:55.8592,lng:-4.2575},
-  {n:'Liverpool Lime Street',c:'LIV',r:'Merseyside',lat:53.4074,lng:-2.9778},
-  {n:'Liverpool Central',c:'LVC',r:'Merseyside',lat:53.4040,lng:-2.9884},
-  {n:'Chester',c:'CTR',r:'Cheshire',lat:53.1908,lng:-2.8857},
-  {n:'Bristol Temple Meads',c:'BRI',r:'Bristol',lat:51.4493,lng:-2.5813},
-  {n:'Cardiff Central',c:'CDF',r:'Wales',lat:51.4757,lng:-3.1794},
-  {n:'Exeter St Davids',c:'EXD',r:'Devon',lat:50.7256,lng:-3.5282},
-  {n:'Plymouth',c:'PLY',r:'Devon',lat:50.3978,lng:-4.1432},
-  {n:'Southampton Central',c:'SOU',r:'Hampshire',lat:50.9094,lng:-1.4147},
-  {n:'Portsmouth Harbour',c:'PMH',r:'Hampshire',lat:50.7988,lng:-1.1094},
-  {n:'Brighton',c:'BTN',r:'East Sussex',lat:50.8291,lng:-0.1415},
-  {n:'Cambridge',c:'CBG',r:'Cambridgeshire',lat:52.1946,lng:0.1376},
-  {n:'Norwich',c:'NRW',r:'Norfolk',lat:52.6264,lng:1.3039},
-  {n:'Ipswich',c:'IPS',r:'Suffolk',lat:52.0572,lng:1.1443},
-  {n:'Oxford',c:'OXF',r:'Oxfordshire',lat:51.7536,lng:-1.2690},
-  {n:'Reading',c:'RDG',r:'Berkshire',lat:51.4576,lng:-0.9717},
-  {n:'Swindon',c:'SWI',r:'Wiltshire',lat:51.5655,lng:-1.7855},
-  {n:'Bath Spa',c:'BTH',r:'Somerset',lat:51.3785,lng:-2.3591},
-  {n:'Peterborough',c:'PBO',r:'Cambridgeshire',lat:52.5738,lng:-0.2494},
-  {n:'Nottingham',c:'NOT',r:'Nottinghamshire',lat:52.9477,lng:-1.1462},
-  {n:'Derby',c:'DBY',r:'Derbyshire',lat:52.9157,lng:-1.4643},
-  {n:'Leicester',c:'LEI',r:'Leicestershire',lat:52.6376,lng:-1.1260},
-  {n:'Northampton',c:'NMP',r:'Northamptonshire',lat:52.2390,lng:-0.8896},
-  {n:'Luton',c:'LUT',r:'Bedfordshire',lat:51.8818,lng:-0.4142},
-  {n:'St Albans City',c:'SAC',r:'Hertfordshire',lat:51.7434,lng:-0.3381},
-  {n:'Guildford',c:'GLD',r:'Surrey',lat:51.2361,lng:-0.5795},
-  {n:'Woking',c:'WOK',r:'Surrey',lat:51.3183,lng:-0.5560},
-];
+function switchTab(n){document.querySelectorAll('[role="tabpanel"]').forEach(function(p){p.classList.remove('active')});document.getElementById('tab-'+n).classList.add('active');document.querySelectorAll('[role="tab"]').forEach(function(t){t.setAttribute('aria-selected','false')});document.getElementById('btn-'+n).setAttribute('aria-selected','true')}
+var now=new Date();document.getElementById('jpDate').valueAsDate=now;document.getElementById('travelDate').valueAsDate=now;document.getElementById('jpTime').value=now.toTimeString().substring(0,5);
+function swapStations(){var f=document.getElementById('jpFrom'),t=document.getElementById('jpTo'),v=f.value;f.value=t.value;t.value=v}
 
-// ═══════════════════════════════════════════════════
-//  AUTOCOMPLETE ENGINE
-// ═══════════════════════════════════════════════════
-const acState = {}; // keyed by input id
+async function planTrip(){var from=document.getElementById('jpFrom').value,to=document.getElementById('jpTo').value,date=document.getElementById('jpDate').value,time=document.getElementById('jpTime').value,btn=document.getElementById('jpBtn'),res=document.getElementById('jpResults');if(from===to){res.innerHTML='<div class="no-results">Origin and destination must be different.</div>';return}btn.disabled=true;btn.textContent='Searching\u2026';res.innerHTML='<div class="no-results"><span class="loading-spinner"></span> Finding trains\u2026</div>';try{var r=await fetch('/api/journey?from='+from+'&to='+to+'&date='+date+'&time='+time);var d=await r.json();if(d.status==='ok'){var h='';var dO=new Date(date+'T00:00:00');var dS=dO.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});h+='<p style="font-size:13px;color:var(--text-sec);margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">Trains for <strong style="color:var(--text)">'+dS+'</strong></p>';if(d.jax_prediction){var j=d.jax_prediction;h+='<div class="jax-banner" style="background:'+j.color+'0c;border:1px solid '+j.color+'22"><div class="jax-badge" style="background:'+j.color+'">'+j.confidence+'</div><div class="jax-info"><h4 style="color:'+j.color+'">'+j.confidence+' Confidence</h4><p>'+(j.stress_coefficient*100).toFixed(1)+'% route stress</p></div></div>'}if(d.journeys.length===0){h+='<div class="no-results">'+(d.future_notice||'No trains found. Try a different time.')+'</div>'}else{for(var i=0;i<d.journeys.length;i++){var jn=d.journeys[i];var sc='ontime',sl='On time';if(jn.status==='CANCELLED'){sc='cancelled';sl='Cancelled'}else if(jn.status==='LATE'){sc='late';sl='Delayed'}h+='<article class="journey-card"><div class="journey-header"><div><span class="journey-time">'+jn.departure+'</span><span class="journey-arrow">\u2192</span><span class="journey-time">'+jn.arrival+'</span></div><div style="display:flex;gap:8px;align-items:center"><span class="'+sc+'" style="font-size:12px;font-weight:600">'+sl+'</span><span class="journey-duration">'+jn.duration+'</span></div></div><div class="journey-legs">';for(var k=0;k<jn.legs.length;k++){var l=jn.legs[k];h+='<div class="leg"><div class="leg-icon train">\ud83d\ude86</div><div class="leg-details"><div class="leg-route">'+l.from+' \u2192 '+l.to+'</div><div class="leg-time">'+(l.operator?l.operator+' \u00b7 ':'')+l.departure+' \u2013 '+l.arrival+(l.platform&&l.platform!=='-'?' \u00b7 Platform '+l.platform:'')+'</div></div></div>'}h+='</div></article>'}}h+='<p style="text-align:right;font-size:11px;color:var(--text-dim);margin-top:12px">Source: '+d.source+'</p>';res.innerHTML=h}else{res.innerHTML='<div class="no-results">'+(d.message||'Could not find journeys.')+'</div>'}}catch(e){res.innerHTML='<div class="no-results">Error connecting to journey planner.</div>'}btn.disabled=false;btn.textContent='Find Trains'}
 
-function highlight(text, query) {
-    if (!query) return text;
-    const idx = text.toLowerCase().indexOf(query.toLowerCase());
-    if (idx === -1) return text;
-    return text.slice(0,idx) + '<mark>' + text.slice(idx, idx+query.length) + '</mark>' + text.slice(idx+query.length);
-}
+async function getBoard(){var crs=document.getElementById('crsSelect').value,tb=document.querySelector('#boardTable tbody');tb.innerHTML='<tr><td colspan="5"><span class="loading-spinner"></span> Loading\u2026</td></tr>';try{var r=await fetch('/api/departures/'+crs);if(!r.ok)throw 0;var d=await r.json();tb.innerHTML='';var s=d.trainServices||[];if(!s.length){tb.innerHTML='<tr><td colspan="5" style="color:var(--text-dim)">No corridor departures found.</td></tr>';return}s.forEach(function(t){var row=document.createElement('tr');var std=t.std||'N/A',dn='Unknown';if(t.destination){if(Array.isArray(t.destination))dn=(t.destination[0]&&t.destination[0].locationName)||'Unknown';else if(t.destination.location){var lc=Array.isArray(t.destination.location)?t.destination.location[0]:t.destination.location;dn=lc.locationName||'Unknown'}else if(t.destination.locationName)dn=t.destination.locationName}var pl=t.platform||'-',etd=t.etd||'N/A',op=t.operator||t.operatorCode||'',ic=t.isCancelled||false,sc='ontime',st='On time',dm=calcDelay(std,etd);if(ic||String(etd).toLowerCase()==='cancelled'){sc='cancelled';st='CANCELLED'}else if(String(etd).toLowerCase()==='delayed'){sc='late';st='Delayed'}else if(dm!==null){sc='late';st='+'+dm+' min'+(dm!==1?'s':'')}row.innerHTML='<td style="font-family:var(--font-mono);font-weight:600">'+formatDepTime(std)+relativeTime(std)+'</td><td>'+dn+'</td><td style="text-align:center">'+pl+'</td><td class="'+sc+'">'+st+'</td><td style="color:var(--text-dim)">'+op+'</td>';tb.appendChild(row)})}catch(e){tb.innerHTML='<tr><td colspan="5" style="color:var(--red)">Error loading data.</td></tr>'}}
 
-function searchStations(query) {
-    if (!query || query.length < 1) return [];
-    const q = query.toLowerCase().trim();
-    return UK_STATIONS
-        .filter(s => s.n.toLowerCase().includes(q) || s.c.toLowerCase().startsWith(q) || s.r.toLowerCase().includes(q))
-        .sort((a,b) => {
-            const ai = a.n.toLowerCase().indexOf(q), bi = b.n.toLowerCase().indexOf(q);
-            if (ai !== bi) return ai - bi;
-            return a.n.localeCompare(b.n);
-        })
-        .slice(0, 8);
-}
+async function checkConfidence(){var date=document.getElementById('travelDate').value;if(!date)return;document.getElementById('result').classList.add('visible');try{var r=await fetch('/api/plan/'+date);var d=await r.json();if(d.status==='ok'){document.getElementById('confidenceBanner').style.background=d.color+'0c';document.getElementById('confidenceBanner').style.border='1px solid '+d.color+'22';document.getElementById('confidenceScore').style.background=d.color;document.getElementById('confidenceScore').textContent=d.confidence;document.getElementById('confidenceTitle').textContent=d.confidence+' Confidence';document.getElementById('confidenceTitle').style.color=d.color;document.getElementById('confidenceText').textContent=d.recommendation;document.getElementById('statMins').textContent=Math.round(d.predicted_minutes);document.getElementById('statMins').style.color=d.color;document.getElementById('statStress').textContent=(d.stress_coefficient*100).toFixed(1)+'%'}else{document.getElementById('confidenceScore').style.background='var(--text-dim)';document.getElementById('confidenceScore').textContent='\u2014';document.getElementById('confidenceTitle').textContent='No Data';document.getElementById('confidenceTitle').style.color='var(--text-dim)';document.getElementById('confidenceText').textContent=d.message||'No prediction for this date.'}}catch(e){document.getElementById('confidenceTitle').textContent='Error';document.getElementById('confidenceText').textContent='Could not retrieve data.'}}
 
-function initAutocomplete(inputId, dropdownId, crsBadgeId, onSelect) {
-    const input = document.getElementById(inputId);
-    const dropdown = document.getElementById(dropdownId);
-    const crsBadge = crsBadgeId ? document.getElementById(crsBadgeId) : null;
-    let focusedIndex = -1;
-
-    acState[inputId] = { crs: null };
-
-    function renderDropdown(results, query) {
-        focusedIndex = -1;
-        if (!results.length) {
-            dropdown.innerHTML = '<div class="ac-no-results">No stations found</div>';
-            dropdown.classList.add('open');
-            input.setAttribute('aria-expanded','true');
-            return;
-        }
-        dropdown.innerHTML = results.map((s, i) =>
-            `<div class="ac-item" role="option" id="ac-opt-${inputId}-${i}" data-crs="${s.c}" data-name="${s.n}" data-lat="${s.lat}" data-lng="${s.lng}" tabindex="-1" aria-selected="false">
-                <span class="ac-name">${highlight(s.n, query)}</span>
-                <span class="ac-region">${s.r}</span>
-                <span class="ac-crs">${s.c}</span>
-            </div>`
-        ).join('');
-        dropdown.classList.add('open');
-        input.setAttribute('aria-expanded','true');
-        dropdown.querySelectorAll('.ac-item').forEach((item) => {
-            item.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                selectStation(item, inputId, crsBadge, onSelect);
-            });
-        });
-    }
-
-    function closeDropdown() {
-        dropdown.classList.remove('open');
-        input.setAttribute('aria-expanded','false');
-        focusedIndex = -1;
-    }
-
-    function moveFocus(dir) {
-        const items = dropdown.querySelectorAll('.ac-item');
-        if (!items.length) return;
-        items[focusedIndex]?.classList.remove('focused');
-        focusedIndex = Math.max(0, Math.min(items.length-1, focusedIndex + dir));
-        items[focusedIndex].classList.add('focused');
-        items[focusedIndex].scrollIntoView({block:'nearest'});
-    }
-
-    input.addEventListener('input', () => {
-        acState[inputId].crs = null;
-        if (crsBadge) crsBadge.classList.remove('visible');
-        const q = input.value.trim();
-        if (q.length < 1) { closeDropdown(); return; }
-        renderDropdown(searchStations(q), q);
-    });
-
-    input.addEventListener('keydown', (e) => {
-        if (!dropdown.classList.contains('open')) return;
-        if (e.key === 'ArrowDown') { e.preventDefault(); moveFocus(1); }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); moveFocus(-1); }
-        else if (e.key === 'Enter') {
-            e.preventDefault();
-            const items = dropdown.querySelectorAll('.ac-item');
-            if (focusedIndex >= 0 && items[focusedIndex]) {
-                selectStation(items[focusedIndex], inputId, crsBadge, onSelect);
-            }
-        } else if (e.key === 'Escape') closeDropdown();
-    });
-
-    input.addEventListener('blur', () => setTimeout(closeDropdown, 150));
-}
-
-function selectStation(item, inputId, crsBadge, onSelect) {
-    const name = item.dataset.name, crs = item.dataset.crs;
-    const lat = parseFloat(item.dataset.lat), lng = parseFloat(item.dataset.lng);
-    document.getElementById(inputId).value = name;
-    acState[inputId] = { crs, name, lat, lng };
-    if (crsBadge) { crsBadge.textContent = crs; crsBadge.classList.add('visible'); }
-    document.getElementById(inputId.replace('jpFrom','ac-from').replace('jpTo','ac-to')
-        .replace('rFrom','ac-r-from').replace('rTo','ac-r-to')
-        || ('ac-' + inputId))?.classList.remove('open');
-    // Close the right dropdown
-    const dropId = inputId === 'jpFrom' ? 'ac-from' : inputId === 'jpTo' ? 'ac-to' : inputId === 'rFrom' ? 'ac-r-from' : 'ac-r-to';
-    document.getElementById(dropId)?.classList.remove('open');
-    document.getElementById(inputId).setAttribute('aria-expanded','false');
-    if (onSelect) onSelect({ name, crs, lat, lng });
-}
-
-// Init autocomplete for journey planner
-initAutocomplete('jpFrom','ac-from','crs-from', null);
-initAutocomplete('jpTo',  'ac-to',  'crs-to',   null);
-
-// Pre-fill defaults
-document.getElementById('jpFrom').value = 'Manchester Piccadilly';
-acState['jpFrom'] = {crs:'MAN', name:'Manchester Piccadilly', lat:53.4773, lng:-2.2309};
-document.getElementById('crs-from').textContent = 'MAN';
-document.getElementById('crs-from').classList.add('visible');
-
-document.getElementById('jpTo').value = 'London Euston';
-acState['jpTo'] = {crs:'EUS', name:'London Euston', lat:51.5284, lng:-0.1332};
-document.getElementById('crs-to').textContent = 'EUS';
-document.getElementById('crs-to').classList.add('visible');
-
-// ═══════════════════════════════════════════════════
-//  TAB SWITCHING
-// ═══════════════════════════════════════════════════
-function switchTab(n) {
-    document.querySelectorAll('[role="tabpanel"]').forEach(p => p.classList.remove('active'));
-    document.getElementById('tab-' + n).classList.add('active');
-    document.querySelectorAll('[role="tab"]').forEach(t => t.setAttribute('aria-selected','false'));
-    document.getElementById('btn-' + n).setAttribute('aria-selected','true');
-}
-document.querySelector('[role="tablist"]').addEventListener('keydown', function(e) {
-    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
-    const i = tabs.indexOf(document.activeElement);
-    if (i === -1) return;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); const x=(i+1)%tabs.length; tabs[x].focus(); tabs[x].click(); }
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); const x=(i-1+tabs.length)%tabs.length; tabs[x].focus(); tabs[x].click(); }
-});
-
-// ═══════════════════════════════════════════════════
-//  CLOCK
-// ═══════════════════════════════════════════════════
-var now = new Date();
-document.getElementById('jpDate').valueAsDate = now;
-document.getElementById('travelDate').valueAsDate = now;
-document.getElementById('jpTime').value = now.toTimeString().substring(0,5);
-function updateClock() {
-    var n = new Date();
-    var el = document.getElementById('liveClock'), ed = document.getElementById('liveDate');
-    if (el) el.textContent = n.toLocaleTimeString('en-GB');
-    if (ed) ed.textContent = n.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-}
-updateClock(); setInterval(updateClock, 1000);
-
-// ═══════════════════════════════════════════════════
-//  STATION SWAP
-// ═══════════════════════════════════════════════════
-function swapStations() {
-    var fV = document.getElementById('jpFrom').value, tV = document.getElementById('jpTo').value;
-    var fS = acState['jpFrom'], tS = acState['jpTo'];
-    document.getElementById('jpFrom').value = tV;
-    document.getElementById('jpTo').value = fV;
-    acState['jpFrom'] = tS; acState['jpTo'] = fS;
-    // swap CRS badges
-    var fc = document.getElementById('crs-from'), tc = document.getElementById('crs-to');
-    var tmp = fc.textContent; fc.textContent = tc.textContent; tc.textContent = tmp;
-    [fc,tc].forEach(b => b.classList.toggle('visible', !!b.textContent));
-}
-
-// ═══════════════════════════════════════════════════
-//  JOURNEY PLANNER
-// ═══════════════════════════════════════════════════
-async function planTrip() {
-    var from = acState['jpFrom']?.crs || document.getElementById('jpFrom').value.toUpperCase().slice(0,3);
-    var to   = acState['jpTo']?.crs   || document.getElementById('jpTo').value.toUpperCase().slice(0,3);
-    var date = document.getElementById('jpDate').value;
-    var time = document.getElementById('jpTime').value;
-    var btn  = document.getElementById('jpBtn');
-    var res  = document.getElementById('jpResults');
-    if (!from || !to) { res.innerHTML='<div class="no-results" role="alert">Please select valid stations.</div>'; return; }
-    if (from === to) { res.innerHTML='<div class="no-results" role="alert">Origin and destination must be different.</div>'; return; }
-    btn.disabled = true; btn.textContent = 'Searching…';
-    res.innerHTML = '<div class="no-results"><span class="loading-spinner" aria-hidden="true"></span> Finding trains…</div>';
-    try {
-        var r = await fetch('/api/journey?from='+from+'&to='+to+'&date='+date+'&time='+time);
-        var d = await r.json();
-        if (d.status==='ok') {
-            var h = '';
-            var dO = new Date(date+'T00:00:00');
-            var dS = dO.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-            h += '<p style="font-size:13px;color:var(--text-sec);margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">Trains for <strong style="color:var(--text)">'+dS+'</strong></p>';
-            if (d.jax_prediction) {
-                var j = d.jax_prediction;
-                h += '<div class="jax-banner" style="background:'+j.color+'0c;border:1px solid '+j.color+'22" role="status"><div class="jax-badge" style="background:'+j.color+'">'+j.confidence+'</div><div class="jax-info"><h4 style="color:'+j.color+'">'+j.confidence+' Confidence</h4><p>'+(j.stress_coefficient*100).toFixed(1)+'% route stress</p></div></div>';
-            }
-            if (!d.journeys?.length) {
-                h += '<div class="no-results" role="alert">No trains found. Try a different time.</div>';
-            } else {
-                d.journeys.forEach(function(jn) {
-                    h += '<article class="journey-card"><div class="journey-header"><div><span class="journey-time">'+jn.departure+'</span><span class="journey-arrow" aria-hidden="true">→</span><span class="sr-only">to</span><span class="journey-time">'+jn.arrival+'</span></div><div class="journey-duration">'+jn.duration+'</div></div><div class="journey-legs">';
-                    jn.legs.forEach(function(l) {
-                        var ic = l.mode==='foot'?'🚶':'🚆', cl = l.mode==='foot'?'foot':'train', ml = l.mode==='foot'?'Walking':'Train';
-                        h += '<div class="leg"><div class="leg-icon '+cl+'" aria-label="'+ml+'">'+ic+'</div><div class="leg-details"><div class="leg-route">'+l.from+' → '+l.to+'</div>';
-                        if (l.destination) h += '<div class="leg-time">towards '+l.destination+' · '+l.departure+' – '+l.arrival+'</div>';
-                        else h += '<div class="leg-time">'+l.departure+' – '+l.arrival+' · '+l.duration+'</div>';
-                        h += '</div></div>';
-                    });
-                    h += '</div></article>';
-                });
-            }
-            h += '<p style="text-align:right;font-size:11px;color:var(--text-dim);margin-top:12px">Source: '+d.source+'</p>';
-            res.innerHTML = h;
-        } else {
-            res.innerHTML = '<div class="no-results" role="alert">'+(d.message||'Could not find journeys.')+'</div>';
-        }
-    } catch(e) {
-        res.innerHTML = '<div class="no-results" role="alert">Error connecting to journey planner.</div>';
-    }
-    btn.disabled = false; btn.textContent = 'Find Trains';
-}
-
-// ═══════════════════════════════════════════════════
-//  DEPARTURES BOARD
-// ═══════════════════════════════════════════════════
-async function getBoard() {
-    var crs = document.getElementById('crsInput').value.toUpperCase();
-    var tb  = document.querySelector('#boardTable tbody');
-    tb.innerHTML = '<tr><td colspan="5"><span class="loading-spinner" aria-hidden="true"></span> Loading…</td></tr>';
-    try {
-        var r = await fetch('/api/departures/'+crs);
-        if (!r.ok) throw 0;
-        var d = await r.json();
-        tb.innerHTML = '';
-        var s = d.trainServices || [];
-        if (!s.length) { tb.innerHTML='<tr><td colspan="5" style="color:var(--text-dim)">No departures found.</td></tr>'; return; }
-        s.forEach(function(t) {
-            var row = document.createElement('tr');
-            var std = t.std||'N/A', dn = 'Unknown';
-            if (t.destination) {
-                if (Array.isArray(t.destination)) dn = (t.destination[0]&&t.destination[0].locationName)||'Unknown';
-                else if (t.destination.location) { var lc=Array.isArray(t.destination.location)?t.destination.location[0]:t.destination.location; dn=lc.locationName||'Unknown'; }
-                else if (t.destination.locationName) dn = t.destination.locationName;
-            }
-            var pl=t.platform||'-', etd=t.etd||'N/A', op=t.operator||t.operatorCode||'';
-            var ic=t.isCancelled||false, sc='ontime', st='On time', dm=calcDelay(std,etd);
-            if (ic||etd.toLowerCase()==='cancelled') { sc='cancelled'; st='CANCELLED'; }
-            else if (etd.toLowerCase()==='delayed') { sc='late'; st='Delayed'; }
-            else if (dm!==null) { sc='late'; st='+'+dm+' min'+(dm!==1?'s':''); }
-            row.innerHTML='<td style="font-family:var(--font-mono);font-weight:600">'+formatDepTime(std)+relativeTime(std)+'</td><td>'+dn+'</td><td style="text-align:center">'+pl+'</td><td class="'+sc+'">'+st+'</td><td style="color:var(--text-dim)">'+op+'</td>';
-            tb.appendChild(row);
-        });
-    } catch(e) {
-        tb.innerHTML='<tr><td colspan="5" style="color:var(--red)">Error loading data.</td></tr>';
-    }
-}
-
-// ═══════════════════════════════════════════════════
-//  AI CONFIDENCE
-// ═══════════════════════════════════════════════════
-async function checkConfidence() {
-    var date = document.getElementById('travelDate').value;
-    if (!date) return;
-    document.getElementById('result').classList.add('visible');
-    try {
-        var r = await fetch('/api/plan/'+date);
-        var d = await r.json();
-        if (d.status==='ok') {
-            document.getElementById('confidenceBanner').style.cssText='background:'+d.color+'0c;border:1px solid '+d.color+'22';
-            document.getElementById('confidenceScore').style.background=d.color;
-            document.getElementById('confidenceScore').textContent=d.confidence;
-            document.getElementById('confidenceTitle').textContent=d.confidence+' Confidence';
-            document.getElementById('confidenceTitle').style.color=d.color;
-            document.getElementById('confidenceText').textContent=d.recommendation;
-            document.getElementById('statMins').textContent=Math.round(d.predicted_minutes);
-            document.getElementById('statMins').style.color=d.color;
-            document.getElementById('statStress').textContent=(d.stress_coefficient*100).toFixed(1)+'%';
-        } else {
-            document.getElementById('confidenceScore').style.background='var(--text-dim)';
-            document.getElementById('confidenceScore').textContent='—';
-            document.getElementById('confidenceTitle').textContent='No Data';
-            document.getElementById('confidenceTitle').style.color='var(--text-dim)';
-            document.getElementById('confidenceText').textContent=d.message||'No prediction for this date.';
-        }
-    } catch(e) {
-        document.getElementById('confidenceTitle').textContent='Error';
-        document.getElementById('confidenceText').textContent='Could not retrieve data.';
-    }
-}
-
-// ═══════════════════════════════════════════════════
-//  30-DAY FORECAST
-// ═══════════════════════════════════════════════════
-async function loadForecast() {
-    try {
-        var r = await fetch('/api/predictions');
-        var d = await r.json();
-        if (d.status==='ok'&&d.predictions&&d.predictions.length>0) {
-            var all=d.predictions, fc=[], ac=[];
-            for (var i=0;i<all.length;i++) { if(all[i].data_type==='Forecast')fc.push(all[i]);else ac.push(all[i]); }
-            if (all.length>0) {
-                document.getElementById('jaxDays').textContent=ac.length;
-                if (all[0].updated_at) { var dt=new Date(all[0].updated_at); document.getElementById('jaxUpdated').textContent=dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}); }
-            }
-            var g = document.getElementById('forecastGrid');
-            if (!fc.length) { g.innerHTML='<div class="no-results">No forecast data yet.</div>'; return; }
-            var h='';
-            fc.forEach(function(f) {
-                var ds=f.forecast_date, p=ds.split('-'), dO=new Date(p[0],p[1]-1,p[2]);
-                var lb=dO.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
-                var st=parseFloat(f.stress_coefficient), cl=stressColor(st), mn=Math.round(f.predicted_minutes), pc=Math.min(st*100,100).toFixed(0);
-                var sl=pc<20?'Low':pc<40?'Moderate':pc<60?'Elevated':pc<80?'High':'Critical';
-                h+='<button class="forecast-day" onclick="selectForecastDate(\''+ds+'\')" aria-label="'+lb+': '+mn+' mins, '+pc+'% stress ('+sl+')"><div class="forecast-date">'+lb+'</div><div class="forecast-mins" style="color:'+cl+'">'+mn+'</div><div class="forecast-stress" style="color:'+cl+'">'+pc+'%</div><div class="stress-bar" aria-hidden="true"><div class="stress-bar-fill" style="width:'+pc+'%;background:'+cl+'"></div></div></button>';
-            });
-            g.innerHTML=h;
-        }
-    } catch(e) { document.getElementById('forecastGrid').innerHTML='<div class="no-results">Could not load forecast.</div>'; }
-}
-function selectForecastDate(ds) { document.getElementById('travelDate').value=ds; switchTab('confidence'); checkConfidence(); }
-function stressColor(s) { if(s<0.2)return'#1a7a4e'; if(s<0.4)return'#65a30d'; if(s<0.6)return'#a67c21'; if(s<0.8)return'#c4622a'; return'#b93a3a'; }
-
-// ═══════════════════════════════════════════════════
-//  HELPERS
-// ═══════════════════════════════════════════════════
+async function loadForecast(){try{var r=await fetch('/api/predictions');var d=await r.json();if(d.status==='ok'&&d.predictions&&d.predictions.length>0){var all=d.predictions,fc=[],ac=[];for(var i=0;i<all.length;i++){if(all[i].data_type==='Forecast')fc.push(all[i]);else ac.push(all[i])}if(all.length>0){document.getElementById('jaxDays').textContent=ac.length;if(all[0].updated_at){var dt=new Date(all[0].updated_at);document.getElementById('jaxUpdated').textContent=dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}}var g=document.getElementById('forecastGrid');if(!fc.length){g.innerHTML='<div class="no-results">No forecast data yet.</div>';return}var h='';for(var j=0;j<fc.length;j++){var f=fc[j],ds=f.forecast_date,p=ds.split('-'),dO=new Date(p[0],p[1]-1,p[2]);var lb=dO.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});var st=parseFloat(f.stress_coefficient),cl=stressColor(st),mn=Math.round(f.predicted_minutes),pc=Math.min(st*100,100).toFixed(0);h+='<button class="forecast-day" onclick="selectForecastDate(\''+ds+'\')"><div class="forecast-date">'+lb+'</div><div class="forecast-mins" style="color:'+cl+'">'+mn+'</div><div class="forecast-stress" style="color:'+cl+'">'+pc+'%</div><div class="stress-bar"><div class="stress-bar-fill" style="width:'+pc+'%;background:'+cl+'"></div></div></button>'}g.innerHTML=h}}catch(e){document.getElementById('forecastGrid').innerHTML='<div class="no-results">Could not load forecast.</div>'}}
+function selectForecastDate(ds){document.getElementById('travelDate').value=ds;switchTab('confidence');checkConfidence()}
+function stressColor(s){if(s<0.2)return'#1a7a4e';if(s<0.4)return'#65a30d';if(s<0.6)return'#a67c21';if(s<0.8)return'#c4622a';return'#b93a3a'}
 function toHHMM(s){if(!s)return null;s=String(s).trim();if(s.indexOf('T')!==-1)s=s.split('T')[1];var t=s.substring(0,5);return/^\d{2}:\d{2}$/.test(t)?t:null}
 function formatDepTime(s){var t=toHHMM(s);return t||String(s).substring(0,5)}
 function calcDelay(std,etd){if(!std||!etd)return null;var e=String(etd).toLowerCase().trim();if(e==='on time'||e==='cancelled'||e==='delayed'||e==='n/a'||e==='no report')return null;try{var t1=toHHMM(std),t2=toHHMM(etd);if(!t1||!t2)return null;var a=t1.split(':'),b=t2.split(':');var base=new Date();base.setSeconds(0,0);var d1=new Date(base);d1.setHours(+a[0],+a[1]);var d2=new Date(base);d2.setHours(+b[0],+b[1]);var df=(d2-d1)/60000;if(df<-720)df+=1440;if(df>720)df-=1440;return df>0?Math.round(df):null}catch(x){return null}}
 function relativeTime(s){try{var t=toHHMM(s);if(!t)return'';var p=t.split(':');var d=new Date();d.setHours(+p[0],+p[1],0,0);var df=(d-new Date())/60000;if(df<-720)df+=1440;if(df<=0&&df>-2)return' <span style="color:var(--text-dim);font-size:11px">(due)</span>';if(df>0&&df<60)return' <span style="color:var(--text-dim);font-size:11px">('+Math.round(df)+'m)</span>'}catch(x){}return''}
-
-// Start forecast load
-loadForecast();
-</script>
-
-<!-- TrainJAX AI Chatbot -->
-<script async
-  src="https://nlunzcju72tn2rgdcusqvahf.agents.do-ai.run/static/chatbot/widget.js"
-  data-agent-id="1e3977e4-2c31-11f1-b074-4e013e2ddde4"
-  data-chatbot-id="XUH_4sKHu-l1ZPEvE8si0nZ7eU0-qGp6"
-  data-name="TrainJax Helper Chatbot"
-  data-primary-color="#031B4E"
-  data-secondary-color="#E5E8ED"
-  data-button-background-color="#0061EB"
-  data-starting-message="Hello! How can I help you today?"
-  data-logo="/static/chatbot/icons/default-agent.svg">
+function updateClock(){var n=new Date(),el=document.getElementById('liveClock'),ed=document.getElementById('liveDate');if(el)el.textContent=n.toLocaleTimeString('en-GB');if(ed)ed.textContent=n.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+updateClock();setInterval(updateClock,1000);loadForecast();
 </script>
 </body>
 </html>
