@@ -249,7 +249,7 @@ def departures(crs):
             if r.status_code == 200:
                 for t in r.json().get('trainServices', []) or []:
                     tid = t.get('rid', t.get('trainid', ''))
-                    if tid not in seen_ids:
+                    if tid not in seen_ids and not t.get('atdSpecified') and not t.get('atd'):
                         seen_ids.add(tid)
                         all_services.append(t)
         except: pass
@@ -262,7 +262,7 @@ def departures(crs):
             if r.status_code == 200:
                 for t in r.json().get('trainServices', []) or []:
                     tid = t.get('rid', t.get('trainid', ''))
-                    if tid not in seen_ids:
+                    if tid not in seen_ids and not t.get('atdSpecified') and not t.get('atd'):
                         seen_ids.add(tid)
                         all_services.append(t)
         except: pass
