@@ -234,42 +234,47 @@ def index():
 
 @app.route('/api/departures/<crs>')
 def departures(crs):
-    """Return corridor departures: destination is a corridor station OR train calls at MAN/EUS."""
+    """Return only Manchester-Euston corridor trains using filterCrs."""
     crs = crs.upper()
     current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
-    url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{crs}/{current_time}?numRows=20&timeWindow=120"
     headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
-    corridor_crs = set(ROUTE_STATIONS.keys()) - {crs}
-    # The two terminal stations — if a train calls at either, it's a corridor service
-    terminals = {'MAN', 'EUS'} - {crs}
-    try:
-        response = requests.get(url, headers=headers, timeout=15, verify=False)
-        data = response.json()
-        if 'trainServices' in data and data['trainServices']:
-            filtered = []
-            for t in data['trainServices']:
-                # Skip departed
-                if t.get('atdSpecified') or t.get('atd'):
-                    continue
-                # Check 1: final destination is a corridor station
-                dest = t.get('destination', [])
-                dest_codes = []
-                if isinstance(dest, list):
-                    dest_codes = [d.get('crs', '').upper() for d in dest if isinstance(d, dict)]
-                elif isinstance(dest, dict):
-                    dest_codes = [dest.get('crs', '').upper()]
-                if any(dc in corridor_crs for dc in dest_codes):
-                    filtered.append(t)
-                    continue
-                # Check 2: train calls at one of the corridor terminals (MAN or EUS)
-                for loc in t.get('subsequentLocations', []):
-                    if isinstance(loc, dict) and loc.get('crs', '').upper() in terminals:
-                        filtered.append(t)
-                        break
-            data['trainServices'] = filtered
-        return jsonify(data), response.status_code
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    all_services = []
+    seen_ids = set()
+
+    # Southbound: trains heading towards London Euston
+    if crs != 'EUS':
+        url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{crs}/{current_time}?numRows=10&timeWindow=120&filterCrs=EUS&filterType=to"
+        try:
+            r = requests.get(url, headers=headers, timeout=15, verify=False)
+            if r.status_code == 200:
+                for t in r.json().get('trainServices', []) or []:
+                    tid = t.get('rid', t.get('trainid', ''))
+                    if tid not in seen_ids:
+                        seen_ids.add(tid)
+                        all_services.append(t)
+        except: pass
+
+    # Northbound: trains heading towards Manchester
+    if crs != 'MAN':
+        url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{crs}/{current_time}?numRows=10&timeWindow=120&filterCrs=MAN&filterType=to"
+        try:
+            r = requests.get(url, headers=headers, timeout=15, verify=False)
+            if r.status_code == 200:
+                for t in r.json().get('trainServices', []) or []:
+                    tid = t.get('rid', t.get('trainid', ''))
+                    if tid not in seen_ids:
+                        seen_ids.add(tid)
+                        all_services.append(t)
+        except: pass
+
+    # Sort by scheduled departure time
+    all_services.sort(key=lambda t: t.get('std', ''))
+
+    return jsonify({
+        'trainServices': all_services,
+        'locationName': ROUTE_STATIONS.get(crs, {}).get('name', crs),
+        'crs': crs
+    })
 
 @app.route('/api/stations')
 def stations():
