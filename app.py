@@ -83,7 +83,7 @@ def scan_live_departures():
     results = []; total_delay = 0; total_delayed = 0
     for station in MANCHESTER_LINE:
         current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
-        url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{station}/{current_time}?numRows=10&timeWindow=120"
+        url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{station}/{current_time}?numRows=10&timeWindow=240"
         station_delay = 0; station_status = "⚠️"
         try:
             response = requests.get(url, headers=headers, timeout=15, verify=False)
