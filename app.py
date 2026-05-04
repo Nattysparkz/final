@@ -234,22 +234,24 @@ def index():
 
 @app.route('/api/departures/<crs>')
 def departures(crs):
-    """Return live departures — only trains whose final destination is a corridor station, excluding already-departed."""
+    """Return corridor departures: destination is a corridor station OR train calls at MAN/EUS."""
     crs = crs.upper()
     current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
     url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{crs}/{current_time}?numRows=20&timeWindow=120"
     headers = {'x-apikey': API_KEY, 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'}
     corridor_crs = set(ROUTE_STATIONS.keys()) - {crs}
+    # The two terminal stations — if a train calls at either, it's a corridor service
+    terminals = {'MAN', 'EUS'} - {crs}
     try:
         response = requests.get(url, headers=headers, timeout=15, verify=False)
         data = response.json()
         if 'trainServices' in data and data['trainServices']:
             filtered = []
             for t in data['trainServices']:
-                # Skip trains that have already departed from this station
+                # Skip departed
                 if t.get('atdSpecified') or t.get('atd'):
                     continue
-                # Only keep trains whose final destination is a corridor station
+                # Check 1: final destination is a corridor station
                 dest = t.get('destination', [])
                 dest_codes = []
                 if isinstance(dest, list):
@@ -258,8 +260,13 @@ def departures(crs):
                     dest_codes = [dest.get('crs', '').upper()]
                 if any(dc in corridor_crs for dc in dest_codes):
                     filtered.append(t)
+                    continue
+                # Check 2: train calls at one of the corridor terminals (MAN or EUS)
+                for loc in t.get('subsequentLocations', []):
+                    if isinstance(loc, dict) and loc.get('crs', '').upper() in terminals:
+                        filtered.append(t)
+                        break
             data['trainServices'] = filtered
-            print(f"📋 {crs}: {len(filtered)} corridor departures shown")
         return jsonify(data), response.status_code
     except Exception as e:
         return jsonify({'error': str(e)}), 500
