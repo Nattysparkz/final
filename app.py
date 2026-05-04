@@ -83,7 +83,7 @@ def scan_live_departures():
     results = []; total_delay = 0; total_delayed = 0
     for station in MANCHESTER_LINE:
         current_time = datetime.now().strftime("%Y%m%dT%H%M%S")
-        url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{station}/{current_time}?numRows=10&timeWindow=240"
+        url = f"{REST_BASE_URL}/GetDepBoardWithDetails/{station}/{current_time}?numRows=10&timeWindow=120"
         station_delay = 0; station_status = "⚠️"
         try:
             response = requests.get(url, headers=headers, timeout=15, verify=False)
@@ -422,17 +422,66 @@ def plan(date):
     try:
         conn = get_db(); cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT forecast_date, predicted_minutes, stress_coefficient, data_type, rmse FROM jax_predictions WHERE forecast_date = %s", (date,))
-        row = cur.fetchone(); conn.close()
-        if not row: return jsonify({'status': 'error', 'message': 'No prediction for this date.'}), 404
+        row = cur.fetchone()
+        if not row: conn.close(); return jsonify({'status': 'error', 'message': 'No prediction for this date.'}), 404
         stress = float(row['stress_coefficient']); minutes = float(row['predicted_minutes'])
         if stress < 0.2: confidence, color, rec = 'HIGH', '#22c55e', 'Excellent day to travel. Minimal delays expected.'
         elif stress < 0.4: confidence, color, rec = 'GOOD', '#84cc16', 'Good conditions. Minor delays possible.'
         elif stress < 0.6: confidence, color, rec = 'MODERATE', '#eab308', 'Some delays expected. Allow 15-20 extra minutes.'
         elif stress < 0.8: confidence, color, rec = 'LOW', '#f97316', 'Significant delays likely. Consider travelling earlier or later.'
         else: confidence, color, rec = 'POOR', '#ef4444', 'Severe disruption expected. Consider alternative transport.'
+
+        # Build XAI reasoning
+        reasons = []
+        try:
+            # Day of week analysis
+            from datetime import datetime as dt_mod
+            target = dt_mod.strptime(date, '%Y-%m-%d')
+            day_name = target.strftime('%A')
+            if target.weekday() >= 5:
+                reasons.append({'factor': 'Weekend service', 'detail': f'{day_name} services run reduced timetables with fewer recovery paths if delays occur.', 'impact': 'neutral'})
+            elif target.weekday() == 0 or target.weekday() == 4:
+                reasons.append({'factor': 'High-demand day', 'detail': f'{day_name}s typically see heavier passenger loads, increasing dwell times at intermediate stations.', 'impact': 'negative' if stress > 0.3 else 'neutral'})
+
+            # Recent trend from last 7 days of predictions
+            cur.execute("SELECT stress_coefficient FROM jax_predictions WHERE forecast_date < %s AND data_type = 'Actual' ORDER BY forecast_date DESC LIMIT 7", (date,))
+            recent = cur.fetchall()
+            if len(recent) >= 3:
+                recent_stresses = [float(r['stress_coefficient']) for r in recent]
+                avg_recent = sum(recent_stresses) / len(recent_stresses)
+                if stress > avg_recent + 0.1:
+                    reasons.append({'factor': 'Worsening trend', 'detail': f'Predicted stress ({stress:.0%}) is above the recent 7-day average ({avg_recent:.0%}), indicating deteriorating corridor conditions.', 'impact': 'negative'})
+                elif stress < avg_recent - 0.1:
+                    reasons.append({'factor': 'Improving trend', 'detail': f'Predicted stress ({stress:.0%}) is below the recent 7-day average ({avg_recent:.0%}), suggesting corridor conditions are recovering.', 'impact': 'positive'})
+                else:
+                    reasons.append({'factor': 'Stable conditions', 'detail': f'Predicted stress ({stress:.0%}) is consistent with the recent 7-day average ({avg_recent:.0%}).', 'impact': 'neutral'})
+
+            # Station-level insight from live snapshot
+            cur.execute("SELECT station, delay_minutes FROM live_snapshot ORDER BY delay_minutes DESC LIMIT 3")
+            hotspots = cur.fetchall()
+            if hotspots and float(hotspots[0].get('delay_minutes', 0)) > 0:
+                names = {'MAN': 'Manchester Piccadilly', 'SPT': 'Stockport', 'MAC': 'Macclesfield', 'SOT': 'Stoke-on-Trent', 'CRE': 'Crewe', 'RUG': 'Rugby', 'MKC': 'Milton Keynes Central', 'EUS': 'London Euston'}
+                top = hotspots[0]
+                sname = names.get(top['station'], top['station'])
+                reasons.append({'factor': 'Current hotspot', 'detail': f'{sname} is currently the most delayed station on the corridor ({float(top["delay_minutes"]):.0f} min), which may persist into the forecast period.', 'impact': 'negative'})
+            elif hotspots:
+                reasons.append({'factor': 'Corridor clear', 'detail': 'No significant delays currently recorded at any corridor station.', 'impact': 'positive'})
+
+            # Stress-level specific reasoning
+            if stress >= 0.8:
+                reasons.append({'factor': 'Critical stress', 'detail': 'The model detects patterns consistent with severe disruption — likely planned engineering works, infrastructure failure, or cascading delays from the northern terminal.', 'impact': 'negative'})
+            elif stress >= 0.6:
+                reasons.append({'factor': 'Elevated congestion', 'detail': 'The sliding window shows delay patterns building across multiple stations, suggesting systemic congestion rather than an isolated incident.', 'impact': 'negative'})
+            elif stress < 0.2:
+                reasons.append({'factor': 'Low network load', 'detail': 'The 14-day sliding window shows consistently low delay values, indicating stable operating conditions across the corridor.', 'impact': 'positive'})
+
+        except Exception as e:
+            print(f"⚠️ Reasoning error: {e}")
+
+        conn.close()
         return jsonify({'status': 'ok', 'date': str(row['forecast_date']), 'predicted_minutes': round(minutes, 1),
             'stress_coefficient': round(stress, 4), 'data_type': row['data_type'], 'rmse': round(float(row['rmse']), 2),
-            'confidence': confidence, 'recommendation': rec, 'color': color})
+            'confidence': confidence, 'recommendation': rec, 'color': color, 'reasons': reasons})
     except Exception as e: return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/health')
